@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusCycle - {{ user.name }}'s Profile</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0b1120;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span {
+      color: #34d399;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+    }
+    .btn-chat {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .btn-chat:hover {
+      background: #4f46e5;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fee2e2;
+    }
+
+    /* Main Container */
+    .profile-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 32px auto;
+      padding: 0 24px;
+      flex: 1;
+    }
+
+    /* Hero Profile Card */
+    .profile-header-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-header-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #34d399, #6366f1);
+    }
+    .user-info-main {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #10b981, #047857);
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .user-title h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .badge-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-pending {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+    }
+    .user-meta-sub {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: #94a3b8;
+      flex-wrap: wrap;
+    }
+    .user-meta-sub span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Actions Bar */
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Grid Layout for Details & Trust Score */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title i {
+      color: #34d399;
+      font-size: 20px;
+    }
+    .card-badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Attribute List */
+    .attribute-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .attribute-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .attr-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .attr-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      word-break: break-all;
+    }
+
+    /* Trust Score Card Details */
+    .trust-score-hero {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.2));
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 14px;
+    }
+    .trust-score-number {
+      font-size: 42px;
+      font-weight: 800;
+      color: #34d399;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .trust-score-max {
+      font-size: 18px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .trust-stars {
+      display: flex;
+      gap: 4px;
+      color: #facc15;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    .trust-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .trust-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .metric-box .label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .metric-box .val {
+      font-size: 16px;
+      color: #ffffff;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* History (Composite Attribute) Section */
+    .history-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .history-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .history-header h2 i {
+      color: #34d399;
+    }
+
+    /* Tab Navigation */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tab-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .tab-btn:hover {
+      color: #ffffff;
+    }
+    .tab-btn.active {
+      background: #10b981;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .tab-count {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 7px;
+      border-radius: 9999px;
+      font-size: 11px;
+    }
+
+    /* Tab Contents */
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* History Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+    }
+    .empty-icon {
+      font-size: 48px;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+    .empty-text {
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Toast Notification for Chat Button Demo */
+    #chatToast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e1b4b;
+      border: 1px solid #6366f1;
+      color: #e0e7ff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+        Campus<span>Cycle</span>
+      </a>
+
+      <div class="nav-actions">
+        <div class="cart-icon-nav" onclick="showCartFutureNotice()" title="Cart (Future Feature)" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; cursor: pointer;">
+          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
+        </div>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">
+          <i class="ph ph-sign-out"></i> Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Content -->
+  <main class="profile-container">
+
+    <!-- Profile Header Card -->
+    <div class="profile-header-card">
+      <div class="user-info-main">
+        <div class="avatar">
+          {{ user.name[0]|upper if user.name else 'U' }}
+        </div>
+        <div class="user-title">
+          <h1>
+            {{ user.name }}
+            {% if verification and verification.verification_status == 'verified' %}
+              <span class="badge-verified"><i class="ph ph-seal-check"></i> Verified Student</span>
+            {% else %}
+              <span class="badge-pending"><i class="ph ph-clock"></i> Verification Pending</span>
+            {% endif %}
+          </h1>
+          <div class="user-meta-sub">
+            <span><i class="ph ph-identification-badge"></i> {{ user.student_id }}</span>
+            <span><i class="ph ph-graduation-cap"></i> {{ user.department or 'BRAC University' }}</span>
+            <span><i class="ph ph-calendar-blank"></i> Semester {{ user.semester or 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons: Chat, Sell Product, Browse Marketplace -->
+      <div class="profile-actions">
+        <!-- Chat Option Button (Standalone button as requested) -->
+        <button type="button" class="btn btn-chat" id="chatBtn" onclick="openChatNotice()">
+          <i class="ph ph-chats-circle"></i> Chat / Messages
+        </button>
+        <!-- Sell Product Option Button (Only on profile page) -->
+        <a href="{{ url_for('sell_product') }}" class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+          <i class="ph ph-plus-circle"></i> Sell Product
+        </a>
+        <!-- Browse Marketplace Button (Only on profile page) -->
+        <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
+          <i class="ph ph-storefront"></i> Browse Marketplace
+        </a>
+      </div>
+    </div>
+
+    <!-- 2-Column Dashboard Grid: Personal Details & Derived Trust Score -->
+    <div class="dashboard-grid">
+
+      <!-- Student Information Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="ph ph-user-circle"></i> Student Profile Information
+          </h2>
+          <span class="card-badge-pill">Entity: User</span>
+        </div>
+
+        <div class="attribute-list">
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-identification-card"></i> Student ID</div>
+            <div class="attr-value">{{ user.student_id }}</div>
+          </div>
+
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-user"></i> Full Name</div>
+            <div class="attr-value">{{ user.name }}</div>
+          </div>
+
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-envelope-simple"></i> GSuite Email</div>
+            <div class="attr-value">{{ user.gsuite_email }}</div>
+          </div>
+
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-phone"></i> Mobile Number</div>
+            <div class="attr-value">{{ user.mobile_number or 'Not provided' }}</div>
+          </div>
+
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-buildings"></i> Department</div>
+            <div class="attr-value">{{ user.department or 'N/A' }}</div>
+          </div>
+
+          <div class="attribute-item">
+            <div class="attr-label"><i class="ph ph-books"></i> Current Semester</div>
+            <div class="attr-value">Semester {{ user.semester or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Score Card (Derived Attribute) -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="ph ph-shield-star"></i> Trust Score
+          </h2>
+          <span class="card-badge-pill" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
+            Derived Attribute
+          </span>
+        </div>
+
+        <div class="trust-score-hero">
+          <div>
+            <div class="trust-score-number">
+              {{ "%.1f"|format(derived_trust_score) if derived_trust_score else '5.0' }}
+              <span class="trust-score-max">/ 5.0</span>
+            </div>
+            <div class="trust-stars">
+              {% set score_round = (derived_trust_score or 5.0)|round|int %}
+              {% for i in range(score_round) %}
+                <i class="ph-fill ph-star"></i>
+              {% endfor %}
+              {% for i in range(5 - score_round) %}
+                <i class="ph ph-star"></i>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: #ffffff; margin-bottom: 4px;">BRACU Peer Reputation</div>
+            <p class="trust-desc">
+              Dynamically derived from verified student peer reviews, on-campus meetup reliability, and transaction ratings.
+            </p>
+          </div>
+        </div>
+
+        <div class="trust-metrics">
+          <div class="metric-box">
+            <div class="label">Total Reviews Received</div>
+            <div class="val">{{ total_reviews }} Review(s)</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Verification Status</div>
+            <div class="val" style="color: #34d399;">
+              <i class="ph ph-check-circle"></i> {{ (verification.verification_status|capitalize) if verification else 'Verified' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- History (Composite Attribute: Purchase, Sell, Exchange) -->
+    <div class="history-card">
+      <div class="history-header">
+        <div>
+          <h2><i class="ph ph-clock-counter-clockwise"></i> Activity & Transaction History</h2>
+          <span style="font-size: 13px; color: #94a3b8;">Composite Attribute: Purchase &bull; Sell &bull; Exchange</span>
+        </div>
+
+        <!-- Tab Controls -->
+        <div class="tabs-nav">
+          <button type="button" class="tab-btn active" onclick="switchTab('purchases', this)">
+            <i class="ph ph-shopping-cart"></i> Purchases
+            <span class="tab-count">{{ purchases|length }}</span>
+          </button>
+          <button type="button" class="tab-btn" onclick="switchTab('sales', this)">
+            <i class="ph ph-tag"></i> Sells & Listings
+            <span class="tab-count">{{ sales|length }}</span>
+          </button>
+          <button type="button" class="tab-btn" onclick="switchTab('exchanges', this)">
+            <i class="ph ph-arrows-left-right"></i> Exchanges
+            <span class="tab-count">{{ exchanges|length }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Pane: Purchases -->
+      <div id="tab-purchases" class="tab-pane active">
+        {% if purchases and purchases|length > 0 %}
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Item / Description</th>
+                  <th>Seller</th>
+                  <th>Final Bill</th>
+                  <th>Payment Method</th>
+                  <th>Delivery Location</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in purchases %}
+                  <tr>
+                    <td><strong>#ORD-{{ item.order_id }}</strong></td>
+                    <td>{{ item.product_name or 'Textbook / Academic Material' }}</td>
+                    <td>{{ item.seller_name or 'BRACU Peer' }}</td>
+                    <td><strong>৳{{ item.final_bill or item.selling_price or '0.00' }}</strong></td>
+                    <td>{{ (item.payment_method|replace('_', ' ')|capitalize) if item.payment_method else 'Cash on Meetup' }}</td>
+                    <td><i class="ph ph-map-pin"></i> {{ item.delivery_place or 'Campus Gate' }}</td>
+                    <td>
+                      <span class="status-badge {{ 'status-completed' if item.delivery_status == 'delivered' or item.delivery_status == 'completed' else 'status-pending' }}">
+                        <i class="ph {{ 'ph-check' if item.delivery_status == 'delivered' or item.delivery_status == 'completed' else 'ph-hourglass' }}"></i>
+                        {{ (item.delivery_status|capitalize) if item.delivery_status else 'Pending' }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph ph-shopping-bag"></i></div>
+            <p class="empty-text">No purchases recorded yet in your purchase history.</p>
+            <a href="{{ url_for('marketplace') }}" class="btn btn-outline"><i class="ph ph-magnifying-glass"></i> Explore Marketplace</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Tab Pane: Sells & Listings -->
+      <div id="tab-sales" class="tab-pane">
+        {% if sales and sales|length > 0 %}
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product ID</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Course Code</th>
+                  <th>Listed Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in sales %}
+                  <tr>
+                    <td><strong>#PRD-{{ item.product_id }}</strong></td>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.category or 'General' }}</td>
+                    <td><strong>৳{{ item.selling_price }}</strong></td>
+                    <td>{{ item.used_in_course or 'N/A' }}</td>
+                    <td>{{ item.purchase_date or 'Recently' }}</td>
+                    <td>
+                      {% if item.sold_date or item.order_id %}
+                        <span class="status-badge status-completed"><i class="ph ph-check-circle"></i> Sold</span>
+                      {% else %}
+                        <span class="status-badge status-active"><i class="ph ph-broadcast"></i> Active Listing</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph ph-tag"></i></div>
+            <p class="empty-text">You haven't listed any items for sale yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Tab Pane: Exchanges -->
+      <div id="tab-exchanges" class="tab-pane">
+        {% if exchanges and exchanges|length > 0 %}
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Exchange #</th>
+                  <th>Exchanged Item</th>
+                  <th>Category</th>
+                  <th>Meetup Place</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in exchanges %}
+                  <tr>
+                    <td><strong>#EXC-{{ item.order_id }}</strong></td>
+                    <td>{{ item.product_name or 'Course Materials' }}</td>
+                    <td>{{ item.category or 'Academic' }}</td>
+                    <td><i class="ph ph-map-pin"></i> {{ item.delivery_place or 'UB Building Lobby' }}</td>
+                    <td>
+                      <span class="status-badge status-completed">
+                        <i class="ph ph-arrows-clockwise"></i> {{ (item.delivery_status|capitalize) if item.delivery_status else 'Completed' }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph ph-arrows-left-right"></i></div>
+            <p class="empty-text">No textbook or equipment exchange history recorded yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Chat Notification Toast (for Chat Button interaction) -->
+  <div id="chatToast">
+    <i class="ph ph-chats-circle" style="font-size: 22px; color: #a5b4fc;"></i>
+    <div>
+      <strong>CampusCycle Chat Messenger</strong>
+      <div style="font-size: 12px; color: #c7d2fe;">Chat feature button connected. Messaging backend will open active peer conversations.</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 CampusCycle &bull; BRAC University Student Marketplace</p>
+  </footer>
+
+  <script>
+    // Tab switching for Composite History attribute
+    function switchTab(tabName, element) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      const targetPane = document.getElementById('tab-' + tabName);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+      if (element) {
+        element.classList.add('active');
+      }
+    }
+
+    // Interactive response for Chat button
+    function openChatNotice() {
+      const toast = document.getElementById('chatToast');
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    // Notice when user clicks the cart icon directly
+    function showCartFutureNotice() {
+      const currentCount = document.getElementById('navCartCount') ? document.getElementById('navCartCount').innerText : '0';
+      const toast = document.getElementById('chatToast');
+      const title = toast.querySelector('strong');
+      const body = toast.querySelector('div');
+      if (title) title.innerText = 'Cart (' + currentCount + ' items)';
+      if (body) body.innerText = 'Cart page will be built in the future.';
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sell a Product - CampusCycle</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span {
+      color: #34d399;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+    }
+
+    /* Form Container */
+    .sell-container {
+      max-width: 760px;
+      width: 100%;
+      margin: 36px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+    .sell-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .form-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header-icon {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #ffffff;
+      margin: 0 auto 14px;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
+    }
+    .form-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .form-subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+
+    /* Section Groups */
+    .form-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #34d399;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .badge-derived {
+      font-size: 10px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .badge-multi {
+      font-size: 10px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #ffffff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #10b981;
+      background: rgba(30, 41, 59, 0.9);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    select option {
+      background: #0f172a;
+      color: #ffffff;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .help-hint {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* Multivalued Photo List */
+    .photo-input-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .btn-remove-photo {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .btn-remove-photo:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    .btn-add-photo {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px dashed rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+      padding: 10px;
+      width: 100%;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-add-photo:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: #60a5fa;
+    }
+
+    /* Submit Button */
+    .btn-submit-listing {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-submit-listing:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+        Campus<span>Cycle</span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+          <i class="ph ph-user-circle"></i> My Profile
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sell Form Container -->
+  <main class="sell-container">
+    <div class="sell-card">
+
+      <div class="form-header">
+        <div class="header-icon"><i class="ph ph-tag-chevron"></i></div>
+        <h1 class="form-title">List an Item for Sell</h1>
+        <p class="form-subtitle">Add your textbook, calculator, or course materials to the CampusCycle marketplace</p>
+      </div>
+
+      {% if error %}
+        <div class="alert alert-danger">
+          <i class="ph ph-warning-circle"></i>
+          <span>{{ error }}</span>
+        </div>
+      {% endif %}
+
+      <form action="{{ url_for('sell_product') }}" method="POST">
+
+        <!-- 1. Primary Identification & Basic Details -->
+        <div class="form-section">
+          <div class="section-title">
+            <i class="ph ph-info"></i> 1. Product Identification & Category
+          </div>
+
+          <div class="form-row">
+            <!-- Product ID (PK) -->
+            <div class="form-group">
+              <label for="product_id">
+                <i class="ph ph-key"></i> Product ID <span style="color: #f59e0b;">(PK)</span>
+              </label>
+              <input 
+                type="text" 
+                id="product_id" 
+                name="product_id" 
+                value="{{ next_id or '' }}" 
+                placeholder="Auto-generated or custom ID"
+                required
+              >
+              <p class="help-hint">Primary key identifier in PRODUCT table</p>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label for="category">
+                <i class="ph ph-squares-four"></i> Category *
+              </label>
+              <select id="category" name="category" required onchange="calculateRecommendedPrice()">
+                <option value="Books">Books & Textbooks</option>
+                <option value="Scientific Calculator">Scientific Calculator</option>
+                <option value="Electronics">Electronics & Laptops</option>
+                <option value="Lab Equipment">Lab Equipment & Kits</option>
+                <option value="Stationery">Course Stationery & Drafters</option>
+                <option value="Other">Other Academic Gear</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Product Name -->
+          <div class="form-group">
+            <label for="product_name">
+              <i class="ph ph-text-t"></i> Product Name *
+            </label>
+            <input 
+              type="text" 
+              id="product_name" 
+              name="product_name" 
+              placeholder="e.g. Calculus Early Transcendentals 10th Ed" 
+              required
+            >
+          </div>
+
+          <!-- Used In Course -->
+          <div class="form-group">
+            <label for="used_in_course">
+              <i class="ph ph-graduation-cap"></i> Used in Course (Optional)
+            </label>
+            <input 
+              type="text" 
+              id="used_in_course" 
+              name="used_in_course" 
+              placeholder="e.g. MAT110, CSE111, PHY112"
+            >
+          </div>
+        </div>
+
+        <!-- 2. Multivalued Photos -->
+        <div class="form-section">
+          <div class="section-title">
+            <i class="ph ph-camera"></i> 2. Product Photos <span class="badge-multi">Multivalued Attribute</span>
+          </div>
+          <p class="help-hint" style="margin-bottom: 12px;">Add one or multiple image URLs showing different angles of your item.</p>
+
+          <div id="photosContainer">
+            <div class="photo-input-item">
+              <input 
+                type="url" 
+                name="photos[]" 
+                placeholder="https://example.com/item-photo1.jpg" 
+                value="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600"
+                required
+              >
+            </div>
+          </div>
+
+          <button type="button" class="btn-add-photo" onclick="addPhotoField()">
+            <i class="ph ph-plus"></i> + Add Another Photo URL
+          </button>
+        </div>
+
+        <!-- 3. Pricing & Derived Valuation -->
+        <div class="form-section">
+          <div class="section-title">
+            <i class="ph ph-currency-dollar"></i> 3. Pricing & Valuation
+          </div>
+
+          <div class="form-row">
+            <!-- Selling Price -->
+            <div class="form-group">
+              <label for="selling_price">
+                <i class="ph ph-tag"></i> Selling Price (৳ BDT) *
+              </label>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                id="selling_price" 
+                name="selling_price" 
+                placeholder="e.g. 500.00" 
+                required
+                oninput="calculateRecommendedPrice()"
+              >
+            </div>
+
+            <!-- Recommended Price (Derived Attribute) -->
+            <div class="form-group">
+              <label for="recommended_price">
+                <i class="ph ph-sparkle"></i> Recommended Price (৳) <span class="badge-derived">Derived Attribute</span>
+              </label>
+              <input 
+                type="number" 
+                step="0.01" 
+                id="recommended_price" 
+                name="recommended_price" 
+                placeholder="Auto-calculated fair price"
+                readonly
+                style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399; font-weight: 700;"
+              >
+              <p class="help-hint">Suggested fair price calculated from category & seller benchmark</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Timeline & History Dates -->
+        <div class="form-section">
+          <div class="section-title">
+            <i class="ph ph-calendar"></i> 4. Item History & Timeline Events
+          </div>
+
+          <div class="form-row">
+            <!-- Purchase Date -->
+            <div class="form-group">
+              <label for="purchase_date">
+                <i class="ph ph-calendar-blank"></i> When did you purchase it? *
+              </label>
+              <input 
+                type="date" 
+                id="purchase_date" 
+                name="purchase_date" 
+                required
+                onchange="calculateRecommendedPrice()"
+              >
+              <p class="help-hint">Used to derive item age & transparency timeline</p>
+            </div>
+
+            <!-- Sold Date (Optional / Lifecycle) -->
+            <div class="form-group">
+              <label for="sold_date">
+                <i class="ph ph-calendar-check"></i> Sold Date (Optional)
+              </label>
+              <input 
+                type="date" 
+                id="sold_date" 
+                name="sold_date"
+              >
+              <p class="help-hint">Leave blank if item is currently available</p>
+            </div>
+          </div>
+
+          <!-- Warranty -->
+          <div class="form-group">
+            <label for="warranty">
+              <i class="ph ph-shield-check"></i> Warranty Information
+            </label>
+            <input 
+              type="text" 
+              id="warranty" 
+              name="warranty" 
+              placeholder="e.g. 6 Months Remaining, Lifetime, or No Warranty"
+            >
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description">
+              <i class="ph ph-article"></i> Product Description *
+            </label>
+            <textarea 
+              id="description" 
+              name="description" 
+              placeholder="Describe the condition, edition, highlightings, accessories included..."
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit-listing">
+          <i class="ph ph-paper-plane-tilt"></i> Publish Product Listing
+        </button>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 CampusCycle &bull; BRAC University Student Marketplace</p>
+  </footer>
+
+  <script>
+    // Dynamic Multivalued Photo Inputs
+    function addPhotoField() {
+      const container = document.getElementById('photosContainer');
+      const div = document.createElement('div');
+      div.className = 'photo-input-item';
+      div.innerHTML = `
+        <input 
+          type="url" 
+          name="photos[]" 
+          placeholder="https://example.com/item-photo.jpg" 
+          required
+        >
+        <button type="button" class="btn-remove-photo" onclick="this.parentElement.remove()">
+          <i class="ph ph-trash"></i>
+        </button>
+      `;
+      container.appendChild(div);
+    }
+
+    // Live Derived Attribute: Recommended Price calculation
+    function calculateRecommendedPrice() {
+      const sellingPriceInput = document.getElementById('selling_price');
+      const recommendedPriceInput = document.getElementById('recommended_price');
+      const categoryInput = document.getElementById('category');
+      
+      const price = parseFloat(sellingPriceInput.value);
+      if (!isNaN(price) && price > 0) {
+        // Compute derived student benchmark (e.g. 92% of asking or category-tailored discount)
+        let discountFactor = 0.95;
+        if (categoryInput.value === 'Books') discountFactor = 0.92;
+        if (categoryInput.value === 'Electronics') discountFactor = 0.94;
+        if (categoryInput.value === 'Scientific Calculator') discountFactor = 0.90;
+
+        const recommended = Math.round(price * discountFactor * 100) / 100;
+        recommendedPriceInput.value = recommended.toFixed(2);
+      } else {
+        recommendedPriceInput.value = '';
+      }
+    }
+
+    // Set today's date as default purchase date if empty
+    document.addEventListener('DOMContentLoaded', () => {
+      const purchaseDate = document.getElementById('purchase_date');
+      if (purchaseDate && !purchaseDate.value) {
+        const today = new Date().toISOString().split('T')[0];
+        purchaseDate.value = today;
+      }
+    });
+  </script>
+
+</body>
+</html>

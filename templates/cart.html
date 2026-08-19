@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart - CampusCycle</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0b1120;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span {
+      color: #34d399;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    /* Container */
+    .cart-container {
+      max-width: 1000px;
+      width: 100%;
+      margin: 36px auto;
+      padding: 0 24px;
+      flex: 1;
+    }
+    .cart-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cart-title {
+      font-size: 26px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cart-title i {
+      color: #34d399;
+    }
+
+    /* Cart Layout Grid */
+    .cart-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 28px;
+    }
+    @media (max-width: 800px) {
+      .cart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cart Items List */
+    .cart-items-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 20px;
+    }
+    .cart-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      align-items: center;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      background: #1e293b;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cart-item-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cart-item-details {
+      flex: 1;
+    }
+    .cart-item-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .cart-item-title:hover {
+      color: #34d399;
+    }
+    .cart-item-meta {
+      font-size: 13px;
+      color: #94a3b8;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .cart-item-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .btn-remove {
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-remove:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 24px;
+      height: fit-content;
+    }
+    .summary-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .summary-row.total {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .summary-row.total span:last-child {
+      color: #34d399;
+      font-size: 22px;
+    }
+    .btn-checkout {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-checkout:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Empty state */
+    .empty-cart {
+      text-align: center;
+      padding: 60px 20px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .empty-icon {
+      font-size: 56px;
+      color: #475569;
+      margin-bottom: 14px;
+    }
+
+    /* Toast */
+    #cartToast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #064e3b;
+      border: 1px solid #10b981;
+      color: #e0e7ff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+        Campus<span>Cycle</span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        <a href="{{ url_for('sell_product') }}" class="btn btn-primary">
+          <i class="ph ph-plus-circle"></i> Sell Item
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cart Content -->
+  <main class="cart-container">
+    <div class="cart-header">
+      <h1 class="cart-title"><i class="ph ph-shopping-cart"></i> Student Cart (CART Entity)</h1>
+      <span style="font-size: 14px; color: #94a3b8;">{{ cart_items|length }} Item(s)</span>
+    </div>
+
+    {% if cart_items and cart_items|length > 0 %}
+      <div class="cart-grid">
+        
+        <!-- Items List -->
+        <div class="cart-items-card">
+          {% for item in cart_items %}
+            <div class="cart-item">
+              <div class="cart-item-img">
+                <img src="{{ item.photo or 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200' }}" alt="{{ item.product_name }}">
+              </div>
+              <div class="cart-item-details">
+                <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="cart-item-title">
+                  {{ item.product_name }}
+                </a>
+                <div class="cart-item-meta">
+                  <span><i class="ph ph-tag"></i> {{ item.category or 'Academic' }}</span>
+                  {% if item.used_in_course %}
+                    <span><i class="ph ph-books"></i> {{ item.used_in_course }}</span>
+                  {% endif %}
+                  <span><i class="ph ph-user"></i> {{ item.seller_name or 'Peer' }}</span>
+                </div>
+                <div class="cart-item-price">৳{{ item.selling_price }}</div>
+              </div>
+              <a href="{{ url_for('remove_from_cart', product_id=item.product_id) }}" class="btn-remove">
+                <i class="ph ph-trash"></i> Remove
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+          <h2 class="summary-title">Cart Summary</h2>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>৳{{ total_bill }}</span>
+          </div>
+          <div class="summary-row">
+            <span>On-Campus Meetup</span>
+            <span style="color: #34d399;">Free (UB Gate / Library)</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total Bill:</span>
+            <span>৳{{ total_bill }}</span>
+          </div>
+
+          <form action="{{ url_for('checkout') }}" method="POST" style="margin-top: 16px;">
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">
+                <i class="ph ph-map-pin"></i> Handover Location
+              </label>
+              <select name="delivery_place" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; font-family: inherit; font-size: 13px;">
+                <option value="UB Gate / Building Lobby">UB Gate / Building Lobby</option>
+                <option value="Library Gate / 3rd Floor">Library Gate / 3rd Floor</option>
+                <option value="Cafeteria (UB-02)">Cafeteria (UB-02)</option>
+                <option value="Khaas Food Court Area">Khaas Food Court Area</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-checkout" style="width: 100%; cursor: pointer;">
+              <i class="ph ph-handshake"></i> Request Meetup & Purchase
+            </button>
+          </form>
+        </div>
+
+      </div>
+    {% else %}
+      <div class="empty-cart">
+        <div class="empty-icon"><i class="ph ph-shopping-bag"></i></div>
+        <h2>Your cart is empty</h2>
+        <p style="color: #94a3b8; margin: 8px 0 24px;">Browse verified textbooks and calculators from BRACU peers.</p>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
+          <i class="ph ph-storefront"></i> Explore Marketplace
+        </a>
+      </div>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 CampusCycle &bull; BRAC University Student Marketplace</p>
+  </footer>
+
+</body>
+</html>

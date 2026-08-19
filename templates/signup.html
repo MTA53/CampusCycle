@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusCycle - Student Sign Up</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #064e3b);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .signup-card {
+      background: #ffffff;
+      max-width: 520px;
+      width: 100%;
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .brand-title {
+      text-align: center;
+      color: #064e3b;
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .brand-subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .alert-danger {
+      background: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid #ef4444;
+    }
+    .alert-success {
+      background: #d1fae5;
+      color: #065f46;
+      border-left: 4px solid #10b981;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: #10b981;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .btn-submit {
+      width: 100%;
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background: #059669;
+    }
+    .footer-link {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .footer-link a {
+      color: #10b981;
+      text-decoration: none;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-card">
+    <div style="margin-bottom: 16px;">
+      <a href="{{ url_for('home') }}" style="color: #64748b; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+        &larr; Back to CampusCycle Home
+      </a>
+    </div>
+
+    <h1 class="brand-title">CampusCycle</h1>
+    <p class="brand-subtitle">Create your verified student account</p>
+
+    <!-- Message Alerts -->
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <form action="{{ url_for('signup') }}" method="POST">
+      
+      <!-- Student ID -->
+      <div class="form-group">
+        <label for="student_id">Student ID *</label>
+        <input 
+          type="text" 
+          id="student_id" 
+          name="student_id" 
+          placeholder="e.g. 23201618 or STU003" 
+          value="{{ request.form.get('student_id', '') }}"
+          required
+        >
+      </div>
+
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="name">Full Name *</label>
+        <input 
+          type="text" 
+          id="name" 
+          name="name" 
+          placeholder="e.g. Rafi Ahmed" 
+          value="{{ request.form.get('name', '') }}"
+          required
+        >
+      </div>
+
+      <!-- GSuite Email -->
+      <div class="form-group">
+        <label for="gsuite_email">BRACU GSuite Email *</label>
+        <input 
+          type="email" 
+          id="gsuite_email" 
+          name="gsuite_email" 
+          placeholder="student.name@g.bracu.ac.bd" 
+          value="{{ request.form.get('gsuite_email', '') }}"
+          required
+        >
+        <p class="help-text">Must end with @g.bracu.ac.bd or @bracu.ac.bd</p>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="Create a strong password" 
+          required
+        >
+      </div>
+
+      <!-- Mobile Number -->
+      <div class="form-group">
+        <label for="mobile_number">Mobile Number</label>
+        <input 
+          type="text" 
+          id="mobile_number" 
+          name="mobile_number" 
+          placeholder="01700000000" 
+          value="{{ request.form.get('mobile_number', '') }}"
+        >
+      </div>
+
+      <!-- Department & Semester -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="department">Department</label>
+          <select id="department" name="department">
+            <option value="CSE">CSE</option>
+            <option value="EEE">EEE</option>
+            <option value="BBA">BBA</option>
+            <option value="MNS">MNS</option>
+            <option value="Pharmacy">Pharmacy</option>
+            <option value="Architecture">Architecture</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="semester">Current Semester</label>
+          <input 
+            type="number" 
+            id="semester" 
+            name="semester" 
+            min="1" 
+            max="12" 
+            placeholder="e.g. 5" 
+            value="{{ request.form.get('semester', '') }}"
+          >
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Sign Up as Student</button>
+    </form>
+
+    <div class="footer-link">
+      Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+    </div>
+  </div>
+
+</body>
+</html>

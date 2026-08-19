@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusCycle - Student Marketplace</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 48px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: #10b981;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+    .logo span {
+      color: #34d399;
+    }
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-outline {
+      background: transparent;
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #ffffff;
+    }
+    .btn-primary {
+      background: #10b981;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
+    }
+    .btn-sell {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+    }
+    .btn-sell:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45);
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16, 185, 129, 0.35) !important;
+    }
+
+    /* Hero Section */
+    .hero-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hero-title {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-description {
+      font-size: 18px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Feature Cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      width: 100%;
+      margin: 20px auto 60px;
+      padding: 0 24px;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      border-radius: 14px;
+      text-align: left;
+    }
+    .feature-icon {
+      font-size: 28px;
+      color: #34d399;
+      margin-bottom: 12px;
+    }
+    .feature-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .feature-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <a href="{{ url_for('home') }}" class="logo">
+      <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+      Campus<span>Cycle</span>
+    </a>
+
+    <div class="nav-buttons">
+      {% if session.get('student_id') %}
+        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+          <i class="ph ph-user-circle"></i> My Profile
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">
+          <i class="ph ph-sign-out"></i> Logout
+        </a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-outline">
+          <i class="ph ph-sign-in"></i> Login
+        </a>
+        <a href="{{ url_for('signup') }}" class="btn btn-primary">
+          <i class="ph ph-user-plus"></i> Sign Up
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <main class="hero-container">
+    <div>
+      <div class="badge">
+        <i class="ph ph-shield-check"></i> BRAC University Student Community
+      </div>
+      <h1 class="hero-title">
+        The Smart Way to Buy, Sell & Share on <span>Campus</span>
+      </h1>
+      <p class="hero-description">
+        CampusCycle connects verified BRACU students to trade textbooks, scientific calculators, course electronics, and project equipment easily on campus.
+      </p>
+    </div>
+  </main>
+
+  <!-- Features Highlights -->
+  <section class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ph ph-student"></i></div>
+      <h3 class="feature-title">Verified GSuite Accounts</h3>
+      <p class="feature-desc">Exclusive community accessible only to verified BRAC University students.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ph ph-books"></i></div>
+      <h3 class="feature-title">Academic Marketplace</h3>
+      <p class="feature-desc">Save up to 60% on course-specific books, lab materials, and calculator models.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ph ph-map-pin"></i></div>
+      <h3 class="feature-title">On-Campus Handover</h3>
+      <p class="feature-desc">Meet peers safely at library gates, cafeteria, or UB building lobbies.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 CampusCycle &bull; Built with Python & Flask &bull; MySQL Database Connected</p>
+  </footer>
+
+</body>
+</html>

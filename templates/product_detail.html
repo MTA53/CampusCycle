@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ product.product_name }} - CampusCycle</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0b1120;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span {
+      color: #34d399;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+    }
+    .btn-sell {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+    .btn-sell:hover {
+      background: #d97706;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+    }
+    .btn-chat {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .btn-chat:hover {
+      background: #4f46e5;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Container */
+    .product-page-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 28px auto;
+      padding: 0 24px;
+      flex: 1;
+    }
+
+    /* Breadcrumbs */
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+    .breadcrumbs a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .breadcrumbs a:hover {
+      color: #34d399;
+    }
+    .breadcrumbs i {
+      font-size: 12px;
+    }
+
+    /* 2-Column Product Layout */
+    .product-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 900px) {
+      .product-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column: Multivalued Photos Gallery */
+    .gallery-container {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .main-photo-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #0f172a;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .main-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .main-photo-wrapper:hover .main-photo {
+      transform: scale(1.03);
+    }
+    .photo-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .thumbnails-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .thumb-item {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      background: #1e293b;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .thumb-item.active {
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+    }
+    .thumb-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Right Column: Product Core Info & Actions */
+    .product-info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .product-meta-tags {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tag-category {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #60a5fa;
+    }
+    .tag-course {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+    .tag-age {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+
+    .product-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+    }
+
+    /* Price Section & Derived Recommended Price */
+    .price-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .price-main {
+      display: flex;
+      flex-direction: column;
+    }
+    .price-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .price-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .recommended-box {
+      text-align: right;
+    }
+    .recommended-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    .recommended-val {
+      font-size: 15px;
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+
+    /* Action Buttons Bar */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .actions-grid .btn {
+      justify-content: center;
+      padding: 14px;
+      font-size: 15px;
+    }
+    @media (max-width: 500px) {
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Seller Info Box */
+    .seller-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .seller-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .seller-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .seller-name {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 15px;
+    }
+    .seller-dept {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .seller-trust {
+      text-align: right;
+    }
+    .seller-trust-score {
+      font-size: 16px;
+      font-weight: 800;
+      color: #facc15;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .seller-trust-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Full Details & Specs */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .spec-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .spec-label {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .spec-val {
+      font-size: 14px;
+      color: #ffffff;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Product Timeline Section */
+    .timeline-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .timeline-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .timeline-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .timeline-header h2 i {
+      color: #34d399;
+    }
+
+    /* Timeline Stepper Component */
+    .timeline-stepper {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      position: relative;
+    }
+    .timeline-step {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      display: flex;
+      gap: 16px;
+      transition: transform 0.2s ease;
+    }
+    .timeline-step:hover {
+      transform: translateY(-2px);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .step-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .icon-purchased {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .icon-listed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .icon-status {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .step-content h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .step-date {
+      font-size: 13px;
+      color: #34d399;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Description Card */
+    .description-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 36px;
+    }
+    .description-card h2 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .description-card p {
+      font-size: 15px;
+      color: #cbd5e1;
+      line-height: 1.7;
+    }
+
+    /* Toast Notification */
+    #actionToast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e1b4b;
+      border: 1px solid #6366f1;
+      color: #e0e7ff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+        Campus<span>Cycle</span>
+      </a>
+
+      <div class="nav-actions">
+        <!-- Cart Icon with Live Count Badge (Icon only with future notice) -->
+        <div class="cart-icon-nav" onclick="showCartFutureNotice()" title="Cart (Future Feature)" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; cursor: pointer; transition: background 0.2s;">
+          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
+        </div>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        {% if session.get('student_id') %}
+          <a href="{{ url_for('profile') }}" class="btn btn-primary">
+            <i class="ph ph-user-circle"></i> My Profile
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline">
+            <i class="ph ph-sign-in"></i> Login
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Product Container -->
+  <main class="product-page-container">
+
+    <!-- Breadcrumb navigation -->
+    <div class="breadcrumbs">
+      <a href="{{ url_for('home') }}"><i class="ph ph-house"></i> Home</a>
+      <i class="ph ph-caret-right"></i>
+      <span>{{ product.category or 'Academic Equipment' }}</span>
+      <i class="ph ph-caret-right"></i>
+      <span style="color: #cbd5e1;">#PRD-{{ product.product_id }}</span>
+    </div>
+
+    <!-- Product Layout Grid -->
+    <div class="product-layout">
+
+      <!-- Left Column: Multivalued Photos Gallery -->
+      <div class="gallery-container">
+        <div class="main-photo-wrapper">
+          <span class="photo-badge">
+            <i class="ph ph-camera"></i> Multivalued Photo Attribute
+          </span>
+          {% if photos and photos|length > 0 %}
+            <img id="mainImage" src="{{ photos[0] }}" alt="{{ product.product_name }}" class="main-photo" onerror="this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'">
+          {% else %}
+            <img id="mainImage" src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600" alt="{{ product.product_name }}" class="main-photo">
+          {% endif %}
+        </div>
+
+        <!-- Thumbnails Strip for Multiple Photos -->
+        {% if photos and photos|length > 1 %}
+          <div class="thumbnails-strip">
+            {% for photo_url in photos %}
+              <div class="thumb-item {{ 'active' if loop.first else '' }}" onclick="switchImage('{{ photo_url }}', this)">
+                <img src="{{ photo_url }}" alt="Thumbnail {{ loop.index }}" onerror="this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200'">
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Right Column: Core Details & CTAs -->
+      <div class="product-info-panel">
+
+        <!-- Tags -->
+        <div class="product-meta-tags">
+          <span class="tag tag-category"><i class="ph ph-tag"></i> {{ product.category or 'Academic' }}</span>
+          {% if product.used_in_course %}
+            <span class="tag tag-course"><i class="ph ph-books"></i> {{ product.used_in_course }}</span>
+          {% endif %}
+          <span class="tag tag-age"><i class="ph ph-hourglass-high"></i> Age: {{ product_age }}</span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="product-title">{{ product.product_name }}</h1>
+
+        <!-- Price Card with Derived Recommended Price -->
+        <div class="price-card">
+          <div class="price-main">
+            <span class="price-label">Selling Price</span>
+            <span class="price-val">৳{{ product.selling_price }}</span>
+          </div>
+          <div class="recommended-box">
+            <span class="recommended-pill">
+              <i class="ph ph-sparkle"></i> Recommended Price (Derived)
+            </span>
+            <div class="recommended-val">
+              ৳{{ product.recommended_price or product.selling_price }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Specs Grid -->
+        <div class="specs-grid">
+          <div class="spec-item">
+            <div class="spec-label"><i class="ph ph-shield-check"></i> Warranty</div>
+            <div class="spec-val">{{ product.warranty or 'No warranty / As-is' }}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label"><i class="ph ph-graduation-cap"></i> Relevant Course</div>
+            <div class="spec-val">{{ product.used_in_course or 'General BRACU' }}</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons: Add to Cart & Chat -->
+        <div class="actions-grid">
+          <button type="button" class="btn btn-primary" id="addToCartBtn" onclick="addToCartAjax({{ product.product_id }})">
+            <i class="ph ph-shopping-cart-simple"></i> Add to Cart
+          </button>
+          <!-- Chat Button (Standalone button as requested) -->
+          <button type="button" class="btn btn-chat" onclick="openChatNotice('{{ seller.name if seller else 'Seller' }}')">
+            <i class="ph ph-chats-circle"></i> Chat with Seller
+          </button>
+        </div>
+
+        <!-- Seller Profile Card -->
+        <div class="seller-card">
+          <div class="seller-info">
+            <div class="seller-avatar">
+              {{ seller.name[0]|upper if seller and seller.name else 'S' }}
+            </div>
+            <div>
+              <div class="seller-name">{{ seller.name if seller else 'BRACU Student Seller' }}</div>
+              <div class="seller-dept">{{ seller.department or 'BRACU' }} &bull; Semester {{ seller.semester or 'N/A' }}</div>
+            </div>
+          </div>
+          <div class="seller-trust">
+            <div class="seller-trust-score">
+              <i class="ph-fill ph-star"></i> {{ "%.1f"|format(seller_trust_score) if seller_trust_score else '4.5' }}
+            </div>
+            <div class="seller-trust-label">Trust Score</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Product Timeline: Important Chronological Events for Transparency -->
+    <div class="timeline-card">
+      <div class="timeline-header">
+        <h2><i class="ph ph-clock-counter-clockwise"></i> Product Lifecycle & History Timeline</h2>
+        <span style="font-size: 13px; color: #94a3b8;">Verifiable milestone transparency for student peer safety</span>
+      </div>
+
+      <div class="timeline-stepper">
+        
+        <!-- Step 1: Originally Purchased -->
+        <div class="timeline-step">
+          <div class="step-icon-box icon-purchased">
+            <i class="ph ph-receipt"></i>
+          </div>
+          <div class="step-content">
+            <h3>Item Originally Purchased</h3>
+            <div class="step-date">
+              <i class="ph ph-calendar"></i> {{ product.purchase_date or 'Historical Date' }}
+            </div>
+            <p class="step-desc">
+              Purchased new by the seller. Item age calculated at <strong>{{ product_age }}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2: Listed on CampusCycle -->
+        <div class="timeline-step">
+          <div class="step-icon-box icon-listed">
+            <i class="ph ph-storefront"></i>
+          </div>
+          <div class="step-content">
+            <h3>Listed on CampusCycle</h3>
+            <div class="step-date">
+              <i class="ph ph-calendar-check"></i> Verified Campus Listing
+            </div>
+            <p class="step-desc">
+              Item verified and published to the BRAC University student marketplace.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3: Current Market Status -->
+        <div class="timeline-step">
+          <div class="step-icon-box icon-status">
+            <i class="ph {{ 'ph-check-circle' if product.sold_date else 'ph-handshake' }}"></i>
+          </div>
+          <div class="step-content">
+            <h3>{{ 'Item Sold' if product.sold_date else 'Ready for Handover' }}</h3>
+            <div class="step-date">
+              <i class="ph ph-map-pin"></i> {{ product.sold_date if product.sold_date else 'Available on Campus' }}
+            </div>
+            <p class="step-desc">
+              {{ 'Item transaction completed and archived.' if product.sold_date else 'Available for meetup at UB Gate, Cafeteria, or Library.' }}
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Detailed Product Description -->
+    <div class="description-card">
+      <h2><i class="ph ph-article"></i> Product Description & Details</h2>
+      <p>{{ product.description or 'No extra description provided by seller. Contact seller via chat for additional queries.' }}</p>
+    </div>
+
+  </main>
+
+  <!-- Interactive Action Toast -->
+  <div id="actionToast">
+    <i id="toastIcon" class="ph ph-chats-circle" style="font-size: 22px; color: #a5b4fc;"></i>
+    <div>
+      <strong id="toastTitle">CampusCycle Notice</strong>
+      <div id="toastBody" style="font-size: 12px; color: #c7d2fe;">Action completed.</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 CampusCycle &bull; Transparent Student Marketplace &bull; BRAC University</p>
+  </footer>
+
+  <script>
+    // Switch image in multivalued photos gallery
+    function switchImage(imageUrl, thumbEl) {
+      document.getElementById('mainImage').src = imageUrl;
+      document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+      if (thumbEl) {
+        thumbEl.classList.add('active');
+      }
+    }
+
+    // Add to Cart AJAX handler: updates cart badge number and shows future notice
+    function addToCartAjax(productId) {
+      fetch('/add-to-cart/' + productId, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        if (response.redirected) {
+          window.location.href = response.url;
+          return null;
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.success) {
+          const cartCountEl = document.getElementById('navCartCount');
+          if (cartCountEl) {
+            cartCountEl.innerText = data.cart_count;
+          }
+          showToast('ph-shopping-cart-simple', '#34d399', 'Added to Cart!', 'Item added (Cart count: ' + data.cart_count + '). Full cart page will be built in the future.');
+        }
+      })
+      .catch(err => {
+        console.log('Cart updated');
+      });
+    }
+
+    // Notice when user clicks the cart icon directly
+    function showCartFutureNotice() {
+      const currentCount = document.getElementById('navCartCount') ? document.getElementById('navCartCount').innerText : '0';
+      showToast('ph-shopping-cart', '#34d399', 'Cart (' + currentCount + ' items)', 'Cart page will be built in the future.');
+    }
+
+    // Interactive Toast Notification
+    function showToast(iconClass, iconColor, title, message) {
+      const toast = document.getElementById('actionToast');
+      const icon = document.getElementById('toastIcon');
+      icon.className = 'ph ' + iconClass;
+      icon.style.color = iconColor;
+      document.getElementById('toastTitle').innerText = title;
+      document.getElementById('toastBody').innerText = message;
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+
+    function openChatNotice(sellerName) {
+      showToast('ph-chats-circle', '#a5b4fc', 'Chat with ' + sellerName, 'Opening peer chat window for this product listing.');
+    }
+  </script>
+
+</body>
+</html>
