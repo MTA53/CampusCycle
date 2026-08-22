@@ -20,6 +20,10 @@ ADD COLUMN password_hash VARCHAR(255) NULL;
 CREATE TABLE verification (
     verification_id INT AUTO_INCREMENT PRIMARY KEY,
     verification_status VARCHAR(20) DEFAULT 'pending',
+    verification_code VARCHAR(10) NULL,
+    token VARCHAR(64) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL,
     verified_at TIMESTAMP NULL,
     student_id VARCHAR(50) NOT NULL,
     FOREIGN KEY (student_id) REFERENCES `user`(student_id) ON DELETE CASCADE

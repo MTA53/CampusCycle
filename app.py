@@ -5,22 +5,22 @@ from datetime import date, datetime
 import os
 
 
-# 1. Initialize Flask App
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'campuscycle_secret_key_bracu_2026')
 
-# 2. Configure MySQL Connection (XAMPP / phpMyAdmin defaults)
+
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'campuscycle'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-# 3. Initialize MySQL Extension
+
 mysql = MySQL(app)
 
 
-# --- Helper Functions for Derived Attributes, Age & Cart Count ---
+
 def compute_product_age(purchase_date):
     """Derives human-readable item age from original purchase date."""
     if not purchase_date:
@@ -78,13 +78,12 @@ def get_cart_count(student_id):
         return 0
 
 
-# 4. Home Route (Clean Landing Page with Login and Sign Up)
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
 
-# 5. Student Sign Up Route
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     # If already logged in, redirect directly to profile
@@ -100,7 +99,7 @@ def signup():
         department = request.form.get('department', '').strip()
         semester = request.form.get('semester', '').strip()
 
-        # Check BRACU email (allows student @g.bracu.ac.bd and @bracu.ac.bd)
+        
         if not (email.endswith('@g.bracu.ac.bd') or email.endswith('@bracu.ac.bd')):
             return render_template(
                 'signup.html', 
@@ -109,7 +108,7 @@ def signup():
 
         cur = mysql.connection.cursor()
 
-        # Check if email or student_id already exists
+        
         cur.execute(
             "SELECT * FROM user WHERE gsuite_email = %s OR student_id = %s",
             (email, student_id)
@@ -123,10 +122,10 @@ def signup():
                 error="An account with this Email or Student ID already exists. Please login."
             )
 
-        # Hash password
+    
         password_hash = generate_password_hash(password)
 
-        # Insert student into USER table
+
         cur.execute("""
             INSERT INTO user
             (student_id, name, gsuite_email, mobile_number,
@@ -143,7 +142,7 @@ def signup():
             5.0
         ))
 
-        # Also create initial student verification entry
+        
         cur.execute("""
             INSERT INTO verification (verification_status, verified_at, student_id)
             VALUES ('verified', NOW(), %s)
@@ -152,7 +151,7 @@ def signup():
         mysql.connection.commit()
         cur.close()
 
-        # Automatically log the student in and direct them to their profile
+       
         session['student_id'] = student_id
         session['user_name'] = name
         session['gsuite_email'] = email
@@ -162,7 +161,7 @@ def signup():
     return render_template('signup.html')
 
 
-# 6. Student Login Route
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     # If already logged in, redirect straight to profile
@@ -187,7 +186,7 @@ def login():
             cur.close()
             return render_template('login.html', error="No account found with this Email or Student ID. Please sign up.", identifier=identifier)
 
-        # Check password hash (with graceful migration for seed test accounts)
+        
         password_valid = False
         stored_hash = user.get('password_hash')
 
@@ -202,7 +201,7 @@ def login():
                     cur.execute("UPDATE user SET password_hash = %s WHERE student_id = %s", (new_hash, user['student_id']))
                     mysql.connection.commit()
         else:
-            # First-time login for seed user: set their password and log in
+           
             password_valid = True
             new_hash = generate_password_hash(password)
             cur.execute("UPDATE user SET password_hash = %s WHERE student_id = %s", (new_hash, user['student_id']))
@@ -223,7 +222,7 @@ def login():
     return render_template('login.html')
 
 
-# 7. Student Profile Dashboard Route
+
 @app.route('/profile')
 def profile():
     student_id = session.get('student_id')
@@ -232,7 +231,7 @@ def profile():
 
     cur = mysql.connection.cursor()
 
-    # 1. Fetch User Record
+    
     cur.execute("SELECT * FROM user WHERE student_id = %s", (student_id,))
     user = cur.fetchone()
 
@@ -241,14 +240,14 @@ def profile():
         session.clear()
         return redirect(url_for('login'))
 
-    # 2. Fetch Verification Status
+   
     cur.execute(
         "SELECT * FROM verification WHERE student_id = %s ORDER BY verification_id DESC LIMIT 1", 
         (student_id,)
     )
     verification = cur.fetchone()
 
-    # 3. Calculate Trust Score (Derived Attribute from REVIEW table)
+    
     cur.execute(
         "SELECT AVG(rating) as avg_rating, COUNT(r_id) as total_reviews FROM review WHERE reviewee_id = %s",
         (student_id,)
@@ -265,7 +264,7 @@ def profile():
         derived_trust_score = 5.0
         total_reviews = 0
 
-    # 4. Fetch Purchase History (Composite Attribute: Purchase)
+    
     cur.execute("""
         SELECT o.order_id, o.final_bill, o.payment_method, o.delivery_date, 
                o.delivery_place, o.delivery_status, o.order_type,
@@ -280,7 +279,7 @@ def profile():
     """, (student_id,))
     purchases = cur.fetchall() or []
 
-    # 5. Fetch Sells & Product Listings (Composite Attribute: Sell)
+    
     cur.execute("""
         SELECT product_id, product_name, category, description,
                selling_price, recommended_price, warranty, used_in_course,
@@ -291,7 +290,7 @@ def profile():
     """, (student_id,))
     sales = cur.fetchall() or []
 
-    # 6. Fetch Exchange History (Composite Attribute: Exchange)
+    
     cur.execute("""
         SELECT o.order_id, o.final_bill, o.delivery_date, 
                o.delivery_place, o.delivery_status, o.order_type,
@@ -321,7 +320,7 @@ def profile():
     )
 
 
-# 8. Campus Marketplace Route
+
 @app.route('/marketplace')
 def marketplace():
     student_id = session.get('student_id')
@@ -346,7 +345,7 @@ def marketplace():
     return render_template('marketplace.html', products=products, cart_count=cart_count)
 
 
-# 9. Product Detail & Timeline Route
+
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
     student_id = session.get('student_id')
@@ -360,14 +359,14 @@ def product_detail(product_id):
         cur.close()
         return redirect(url_for('marketplace'))
 
-    # 2. Fetch Multiple Photos (Multivalued Attribute)
+    
     cur.execute("SELECT photo FROM product_photo WHERE product_id = %s", (product_id,))
     photo_rows = cur.fetchall() or []
     photos = [r['photo'] for r in photo_rows if r.get('photo')]
     if not photos:
         photos = ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600']
 
-    # 3. Fetch Seller details & Trust Score
+    
     cur.execute("""
         SELECT student_id, name, department, semester, trust_score 
         FROM user 
@@ -404,7 +403,7 @@ def product_detail(product_id):
     )
 
 
-# 10. Sell Product Route (List an Item)
+
 @app.route('/sell', methods=['GET', 'POST'])
 def sell_product():
     if not session.get('student_id'):
@@ -425,7 +424,7 @@ def sell_product():
         purchase_date = request.form.get('purchase_date', '').strip() or None
         sold_date = request.form.get('sold_date', '').strip() or None
 
-        # Derive Recommended Price
+        
         if recommended_price_input:
             try:
                 recommended_price = float(recommended_price_input)
@@ -434,7 +433,7 @@ def sell_product():
         else:
             recommended_price = compute_recommended_price(selling_price, category)
 
-        # 1. Insert into PRODUCT table
+        
         if product_id_input and product_id_input.isdigit():
             target_id = int(product_id_input)
             cur.execute("""
@@ -458,7 +457,7 @@ def sell_product():
             ))
             target_id = cur.lastrowid
 
-        # 2. Insert Multiple Photos (Multivalued Attribute)
+        
         photos = request.form.getlist('photos[]')
         for p_url in photos:
             p_url = p_url.strip()
@@ -471,7 +470,7 @@ def sell_product():
                 except Exception:
                     pass
 
-        # 3. Insert into PRODUCT_PRICE
+        
         try:
             cur.execute("""
                 INSERT INTO product_price (product_id, selling)
@@ -480,7 +479,7 @@ def sell_product():
         except Exception:
             pass
 
-        # 4. Insert into PRODUCT_DATE
+        
         try:
             cur.execute("""
                 INSERT INTO product_date (product_id, purchase, sold)
@@ -494,7 +493,7 @@ def sell_product():
 
         return redirect(url_for('product_detail', product_id=target_id))
 
-    # GET: suggest next available numeric ID
+    
     cur.execute("SELECT COALESCE(MAX(product_id), 0) + 1 AS next_id FROM product")
     row = cur.fetchone()
     next_id = row['next_id'] if row else 1
@@ -503,7 +502,7 @@ def sell_product():
     return render_template('sell_product.html', next_id=next_id)
 
 
-# 11. Add Item to Cart Route (Supports both GET and POST AJAX, increments cart count)
+
 @app.route('/add-to-cart/<int:product_id>', methods=['GET', 'POST'])
 def add_to_cart_route(product_id):
     student_id = session.get('student_id')
@@ -516,7 +515,7 @@ def add_to_cart_route(product_id):
 
     cur = mysql.connection.cursor()
 
-    # Ensure cart exists
+    
     cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
     user_cart = cur.fetchone()
     if not user_cart:
@@ -526,19 +525,19 @@ def add_to_cart_route(product_id):
     else:
         cart_id = user_cart['cart_id']
 
-    # Insert into ADDED table (junction cart <-> product)
+    
     try:
         cur.execute("INSERT IGNORE INTO added (cart_id, product_id) VALUES (%s, %s)", (cart_id, product_id))
     except Exception:
         pass
 
-    # Insert into ADD_TO_CART table (junction user <-> product)
+    
     try:
         cur.execute("INSERT IGNORE INTO add_to_cart (product_id, student_id) VALUES (%s, %s)", (product_id, student_id))
     except Exception:
         pass
 
-    # Fetch updated count of items in student's cart
+    
     cur.execute("""
         SELECT COUNT(product_id) as cnt FROM added WHERE cart_id = %s
     """, (cart_id,))
@@ -558,21 +557,21 @@ def add_to_cart_route(product_id):
     return redirect(url_for('product_detail', product_id=product_id))
 
 
-# 15. Logout Route
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
 
-# 16. Reset Password Route (Inline on Login Page)
+
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
     identifier = request.form.get('reset_identifier', '').strip()
     new_password = request.form.get('new_password', '')
     confirm_password = request.form.get('confirm_password', '')
 
-    # Validate inputs
+    
     if not identifier:
         return render_template('login.html', reset_error="Please enter your Email or Student ID.")
 
@@ -585,7 +584,7 @@ def reset_password():
     if len(new_password) < 4:
         return render_template('login.html', reset_error="Password must be at least 4 characters long.")
 
-    # Find user by email or student_id
+    
     cur = mysql.connection.cursor()
     cur.execute(
         "SELECT * FROM user WHERE gsuite_email = %s OR student_id = %s",
@@ -597,7 +596,7 @@ def reset_password():
         cur.close()
         return render_template('login.html', reset_error="No account found with this Email or Student ID.")
 
-    # Update password
+    
     new_hash = generate_password_hash(new_password)
     cur.execute(
         "UPDATE user SET password_hash = %s WHERE student_id = %s",
