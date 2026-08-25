@@ -551,14 +551,127 @@
       font-weight: 600;
     }
 
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: 20px;
+    /* Modal Styles for Editing Profile */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 500px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-title i {
+      color: #34d399;
+      font-size: 22px;
+    }
+    .btn-close-modal {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-close-modal:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .form-group-modal {
+      margin-bottom: 18px;
+    }
+    .form-group-modal label {
+      display: block;
       font-size: 13px;
-      color: #64748b;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      margin-top: auto;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .form-group-modal select, .form-group-modal input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ffffff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-group-modal select option {
+      background: #0f172a;
+      color: #ffffff;
+    }
+    .form-group-modal select:focus, .form-group-modal input:focus {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.06);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .btn-edit-inline {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-edit-inline:hover {
+      background: rgba(16, 185, 129, 0.25);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.5);
+      transform: translateY(-1px);
     }
   </style>
 </head>
@@ -606,8 +719,8 @@
           </h1>
           <div class="user-meta-sub">
             <span><i class="ph ph-identification-badge"></i> {{ user.student_id }}</span>
-            <span><i class="ph ph-graduation-cap"></i> {{ user.department or 'BRAC University' }}</span>
-            <span><i class="ph ph-calendar-blank"></i> Semester {{ user.semester or 'N/A' }}</span>
+            <span id="headerDept"><i class="ph ph-graduation-cap"></i> {{ user.department or 'BRAC University' }}</span>
+            <span id="headerSemester"><i class="ph ph-calendar-blank"></i> {% if user.semester == 'Graduate' %}Graduate{% elif user.semester %}Semester {{ user.semester }}{% else %}N/A{% endif %}</span>
           </div>
         </div>
       </div>
@@ -638,7 +751,12 @@
           <h2 class="card-title">
             <i class="ph ph-user-circle"></i> Student Profile Information
           </h2>
-          <span class="card-badge-pill">Entity: User</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn-edit-inline" onclick="openEditModal()">
+              <i class="ph ph-pencil-simple"></i> Edit Academic Info
+            </button>
+            <span class="card-badge-pill">Entity: User</span>
+          </div>
         </div>
 
         <div class="attribute-list">
@@ -659,17 +777,17 @@
 
           <div class="attribute-item">
             <div class="attr-label"><i class="ph ph-phone"></i> Mobile Number</div>
-            <div class="attr-value">{{ user.mobile_number or 'Not provided' }}</div>
+            <div class="attr-value" id="displayMobile">{{ user.mobile_number or 'Not provided' }}</div>
           </div>
 
           <div class="attribute-item">
             <div class="attr-label"><i class="ph ph-buildings"></i> Department</div>
-            <div class="attr-value">{{ user.department or 'N/A' }}</div>
+            <div class="attr-value" id="displayDept">{{ user.department or 'N/A' }}</div>
           </div>
 
           <div class="attribute-item">
             <div class="attr-label"><i class="ph ph-books"></i> Current Semester</div>
-            <div class="attr-value">Semester {{ user.semester or 'N/A' }}</div>
+            <div class="attr-value" id="displaySemester">{% if user.semester == 'Graduate' %}Graduate{% elif user.semester %}Semester {{ user.semester }}{% else %}N/A{% endif %}</div>
           </div>
         </div>
       </div>
@@ -883,12 +1001,83 @@
 
   </main>
 
-  <!-- Chat Notification Toast (for Chat Button interaction) -->
+  <!-- Edit Academic Info Modal -->
+  <div class="modal-backdrop" id="editProfileModal" onclick="handleBackdropClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="ph ph-user-gear"></i> Edit Academic Info
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeEditModal()">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <form id="editProfileForm" action="{{ url_for('update_profile') }}" method="POST">
+        <!-- Department Dropdown -->
+        <div class="form-group-modal">
+          <label for="edit_department">Department</label>
+          <select id="edit_department" name="department" required>
+            <option value="CSE" {% if user.department == 'CSE' %}selected{% endif %}>CSE</option>
+            <option value="CS" {% if user.department == 'CS' %}selected{% endif %}>CS</option>
+            <option value="EEE" {% if user.department == 'EEE' %}selected{% endif %}>EEE</option>
+            <option value="BBA" {% if user.department == 'BBA' %}selected{% endif %}>BBA</option>
+            <option value="MNS" {% if user.department == 'MNS' %}selected{% endif %}>MNS</option>
+            <option value="Pharmacy" {% if user.department == 'Pharmacy' %}selected{% endif %}>Pharmacy</option>
+            <option value="Architecture" {% if user.department == 'Architecture' %}selected{% endif %}>Architecture</option>
+            <option value="Other" {% if user.department == 'Other' or not user.department in ['CSE','CS','EEE','BBA','MNS','Pharmacy','Architecture'] %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+
+        <!-- Current Semester Dropdown -->
+        <div class="form-group-modal">
+          <label for="edit_semester">Current Semester</label>
+          <select id="edit_semester" name="semester" required>
+            <option value="" disabled {% if not user.semester %}selected{% endif %}>Select Semester</option>
+            <option value="1" {% if user.semester == '1' %}selected{% endif %}>Semester 1</option>
+            <option value="2" {% if user.semester == '2' %}selected{% endif %}>Semester 2</option>
+            <option value="3" {% if user.semester == '3' %}selected{% endif %}>Semester 3</option>
+            <option value="4" {% if user.semester == '4' %}selected{% endif %}>Semester 4</option>
+            <option value="5" {% if user.semester == '5' %}selected{% endif %}>Semester 5</option>
+            <option value="6" {% if user.semester == '6' %}selected{% endif %}>Semester 6</option>
+            <option value="7" {% if user.semester == '7' %}selected{% endif %}>Semester 7</option>
+            <option value="8" {% if user.semester == '8' %}selected{% endif %}>Semester 8</option>
+            <option value="9" {% if user.semester == '9' %}selected{% endif %}>Semester 9</option>
+            <option value="10" {% if user.semester == '10' %}selected{% endif %}>Semester 10</option>
+            <option value="11" {% if user.semester == '11' %}selected{% endif %}>Semester 11</option>
+            <option value="12" {% if user.semester == '12' %}selected{% endif %}>Semester 12</option>
+            <option value="Graduate" {% if user.semester == 'Graduate' %}selected{% endif %}>Graduate</option>
+          </select>
+        </div>
+
+        <!-- Mobile Number -->
+        <div class="form-group-modal">
+          <label for="edit_mobile">Mobile Number</label>
+          <input 
+            type="text" 
+            id="edit_mobile" 
+            name="mobile_number" 
+            placeholder="01700000000" 
+            value="{{ user.mobile_number or '' }}"
+          >
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+            <i class="ph ph-floppy-disk"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast (for Chat & Profile Update feedback) -->
   <div id="chatToast">
-    <i class="ph ph-chats-circle" style="font-size: 22px; color: #a5b4fc;"></i>
+    <i class="ph ph-check-circle" id="toastIcon" style="font-size: 22px; color: #34d399;"></i>
     <div>
-      <strong>CampusCycle Chat Messenger</strong>
-      <div style="font-size: 12px; color: #c7d2fe;">Chat feature button connected. Messaging backend will open active peer conversations.</div>
+      <strong id="toastTitle">Academic Profile Updated</strong>
+      <div id="toastDesc" style="font-size: 12px; color: #cbd5e1;">Your department and semester have been saved.</div>
     </div>
   </div>
 
@@ -912,27 +1101,120 @@
       }
     }
 
+    // Modal open/close controls
+    function openEditModal() {
+      const modal = document.getElementById('editProfileModal');
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('editProfileModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target.id === 'editProfileModal') {
+        closeEditModal();
+      }
+    }
+
     // Interactive response for Chat button
     function openChatNotice() {
+      showToast('CampusCycle Chat Messenger', 'Chat feature button connected. Messaging backend will open active peer conversations.', 'ph-chats-circle', '#a5b4fc');
+    }
+
+    // Notice when user clicks the cart icon directly
+    function showCartFutureNotice() {
+      const currentCount = document.getElementById('navCartCount') ? document.getElementById('navCartCount').innerText : '0';
+      showToast('Cart (' + currentCount + ' items)', 'Cart page will be built in the future.', 'ph-shopping-cart', '#34d399');
+    }
+
+    // Generic Toast Notification helper
+    function showToast(title, desc, iconClass, iconColor) {
       const toast = document.getElementById('chatToast');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastDesc = document.getElementById('toastDesc');
+      const toastIcon = document.getElementById('toastIcon');
+
+      if (toastTitle) toastTitle.innerText = title;
+      if (toastDesc) toastDesc.innerText = desc;
+      if (toastIcon) {
+        toastIcon.className = 'ph ' + (iconClass || 'ph-check-circle');
+        toastIcon.style.color = iconColor || '#34d399';
+      }
+
       toast.style.display = 'flex';
       setTimeout(() => {
         toast.style.display = 'none';
       }, 4000);
     }
 
-    // Notice when user clicks the cart icon directly
-    function showCartFutureNotice() {
-      const currentCount = document.getElementById('navCartCount') ? document.getElementById('navCartCount').innerText : '0';
-      const toast = document.getElementById('chatToast');
-      const title = toast.querySelector('strong');
-      const body = toast.querySelector('div');
-      if (title) title.innerText = 'Cart (' + currentCount + ' items)';
-      if (body) body.innerText = 'Cart page will be built in the future.';
-      toast.style.display = 'flex';
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3500);
+    // Handle AJAX profile update form submission for instant live update
+    const editForm = document.getElementById('editProfileForm');
+    if (editForm) {
+      editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('saveProfileBtn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
+        }
+
+        const formData = new FormData(editForm);
+
+        fetch(editForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save Changes';
+          }
+          if (data.success) {
+            closeEditModal();
+
+            // Update Department on page
+            const deptText = data.department || 'N/A';
+            const displayDept = document.getElementById('displayDept');
+            if (displayDept) displayDept.innerText = deptText;
+            const headerDept = document.getElementById('headerDept');
+            if (headerDept) headerDept.innerHTML = '<i class="ph ph-graduation-cap"></i> ' + (data.department || 'BRAC University');
+
+            // Update Semester on page
+            const semVal = data.semester;
+            const semDisplay = semVal === 'Graduate' ? 'Graduate' : (semVal ? 'Semester ' + semVal : 'N/A');
+            const displaySemester = document.getElementById('displaySemester');
+            if (displaySemester) displaySemester.innerText = semDisplay;
+            const headerSemester = document.getElementById('headerSemester');
+            if (headerSemester) headerSemester.innerHTML = '<i class="ph ph-calendar-blank"></i> ' + semDisplay;
+
+            // Update Mobile on page
+            const displayMobile = document.getElementById('displayMobile');
+            if (displayMobile) displayMobile.innerText = data.mobile_number || 'Not provided';
+
+            showToast('Profile Updated', 'Academic department & semester successfully saved.', 'ph-check-circle', '#34d399');
+          } else {
+            editForm.submit(); // fallback to standard submit
+          }
+        })
+        .catch(err => {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save Changes';
+          }
+          // Fallback to standard form submit
+          editForm.submit();
+        });
+      });
     }
   </script>
 

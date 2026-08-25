@@ -721,7 +721,7 @@
             </div>
             <div>
               <div class="seller-name">{{ seller.name if seller else 'BRACU Student Seller' }}</div>
-              <div class="seller-dept">{{ seller.department or 'BRACU' }} &bull; Semester {{ seller.semester or 'N/A' }}</div>
+              <div class="seller-dept">{{ seller.department or 'BRACU' }} &bull; {% if seller.semester == 'Graduate' %}Graduate{% elif seller.semester %}Semester {{ seller.semester }}{% else %}N/A{% endif %}</div>
             </div>
           </div>
           <div class="seller-trust">

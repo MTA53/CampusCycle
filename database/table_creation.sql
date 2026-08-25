@@ -5,7 +5,7 @@ CREATE TABLE `user` (
     gsuite_email VARCHAR(150) UNIQUE NOT NULL,
     mobile_number VARCHAR(20),
     department VARCHAR(100),
-    semester INT,
+    semester VARCHAR(50),
     trust_score DECIMAL(3,2) DEFAULT 0.0,
     purchase_history TEXT,
     sell_history TEXT,

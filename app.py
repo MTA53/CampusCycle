@@ -321,6 +321,43 @@ def profile():
 
 
 
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    student_id = session.get('student_id')
+    if not student_id:
+        return redirect(url_for('login'))
+
+    department = request.form.get('department', '').strip()
+    semester = request.form.get('semester', '').strip()
+    mobile_number = request.form.get('mobile_number', '').strip()
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE user 
+        SET department = %s, semester = %s, mobile_number = %s
+        WHERE student_id = %s
+    """, (
+        department if department else None,
+        semester if semester else None,
+        mobile_number if mobile_number else None,
+        student_id
+    ))
+    mysql.connection.commit()
+    cur.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({
+            'success': True,
+            'department': department,
+            'semester': semester,
+            'mobile_number': mobile_number,
+            'message': 'Academic profile updated successfully!'
+        })
+
+    return redirect(url_for('profile'))
+
+
+
 @app.route('/marketplace')
 def marketplace():
     student_id = session.get('student_id')
