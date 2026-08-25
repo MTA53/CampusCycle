@@ -284,18 +284,20 @@
       </a>
 
       <div class="nav-actions">
-        <!-- Cart Icon with dynamic counter badge (Icon only with future notice) -->
-        <div class="cart-badge-indicator" onclick="showCartFutureNotice()" style="cursor: pointer;" title="Cart (Future Feature)">
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
+          <i class="ph ph-chats-circle"></i> Messages
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="cart-badge-indicator" style="text-decoration: none;">
           <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i>
           Cart: <span id="navCartCount" class="cart-count-pill">{{ cart_count or 0 }}</span>
-        </div>
+        </a>
 
         {% if session.get('student_id') %}
           <a href="{{ url_for('sell_product') }}" class="btn btn-outline" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.4);">
             <i class="ph ph-plus-circle"></i> Sell Item
           </a>
           <a href="{{ url_for('profile') }}" class="btn btn-primary">
-            <i class="ph ph-user-circle"></i> My Profile
+            <i class="ph ph-user-circle"></i> Profile
           </a>
         {% else %}
           <a href="{{ url_for('login') }}" class="btn btn-outline">

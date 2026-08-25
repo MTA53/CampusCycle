@@ -599,16 +599,18 @@
       </a>
 
       <div class="nav-actions">
-        <!-- Cart Icon with Live Count Badge (Icon only with future notice) -->
-        <div class="cart-icon-nav" onclick="showCartFutureNotice()" title="Cart (Future Feature)" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; cursor: pointer; transition: background 0.2s;">
-          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
-        </div>
         <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
           <i class="ph ph-storefront"></i> Marketplace
         </a>
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
+          <i class="ph ph-chats-circle"></i> Messages
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="cart-icon-nav" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; text-decoration: none;">
+          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
+        </a>
         {% if session.get('student_id') %}
           <a href="{{ url_for('profile') }}" class="btn btn-primary">
-            <i class="ph ph-user-circle"></i> My Profile
+            <i class="ph ph-user-circle"></i> Profile
           </a>
         {% else %}
           <a href="{{ url_for('login') }}" class="btn btn-outline">
@@ -707,10 +709,10 @@
           <button type="button" class="btn btn-primary" id="addToCartBtn" onclick="addToCartAjax({{ product.product_id }})">
             <i class="ph ph-shopping-cart-simple"></i> Add to Cart
           </button>
-          <!-- Chat Button (Standalone button as requested) -->
-          <button type="button" class="btn btn-chat" onclick="openChatNotice('{{ seller.name if seller else 'Seller' }}')">
+          <!-- Chat Button (Direct link to peer chat with product context) -->
+          <a href="{{ url_for('chat_view', user=seller.student_id if seller else '', product_id=product.product_id) }}" class="btn btn-chat">
             <i class="ph ph-chats-circle"></i> Chat with Seller
-          </button>
+          </a>
         </div>
 
         <!-- Seller Profile Card -->

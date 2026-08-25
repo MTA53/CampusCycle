@@ -573,11 +573,14 @@
       </a>
 
       <div class="nav-actions">
-        <div class="cart-icon-nav" onclick="showCartFutureNotice()" title="Cart (Future Feature)" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; cursor: pointer;">
-          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
-        </div>
         <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
           <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
+          <i class="ph ph-chats-circle"></i> Messages
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="cart-icon-nav" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; text-decoration: none;">
+          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
         </a>
         <a href="{{ url_for('logout') }}" class="btn btn-danger">
           <i class="ph ph-sign-out"></i> Logout
@@ -614,10 +617,10 @@
 
       <!-- Action Buttons: Chat, Sell Product, Browse Marketplace -->
       <div class="profile-actions">
-        <!-- Chat Option Button (Standalone button as requested) -->
-        <button type="button" class="btn btn-chat" id="chatBtn" onclick="openChatNotice()">
+        <!-- Chat Option Button (Direct Link to Chat) -->
+        <a href="{{ url_for('chat_view') }}" class="btn btn-chat" id="chatBtn">
           <i class="ph ph-chats-circle"></i> Chat / Messages
-        </button>
+        </a>
         <!-- Sell Product Option Button (Only on profile page) -->
         <a href="{{ url_for('sell_product') }}" class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
           <i class="ph ph-plus-circle"></i> Sell Product

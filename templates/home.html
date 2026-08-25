@@ -212,12 +212,18 @@
     </a>
 
     <div class="nav-buttons">
+      <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+        <i class="ph ph-storefront"></i> Marketplace
+      </a>
       {% if session.get('student_id') %}
-        <a href="{{ url_for('profile') }}" class="btn btn-primary">
-          <i class="ph ph-user-circle"></i> My Profile
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
+          <i class="ph ph-chats-circle"></i> Messages
         </a>
-        <a href="{{ url_for('logout') }}" class="btn btn-outline">
-          <i class="ph ph-sign-out"></i> Logout
+        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+          <i class="ph ph-user-circle"></i> Profile
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline" style="color: #f87171;">
+          <i class="ph ph-sign-out"></i>
         </a>
       {% else %}
         <a href="{{ url_for('login') }}" class="btn btn-outline">

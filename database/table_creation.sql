@@ -119,7 +119,9 @@ CREATE TABLE chat (
     chat_id INT AUTO_INCREMENT PRIMARY KEY,
     text TEXT,
     photo TEXT,
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    sender_id VARCHAR(50) NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES `user`(student_id) ON DELETE SET NULL
 );
 
 -- 11. PARTICIPATE (junction: user <-> chat)
