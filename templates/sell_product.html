@@ -347,8 +347,14 @@
         <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
           <i class="ph ph-storefront"></i> Marketplace
         </a>
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
+          <i class="ph ph-chats-circle"></i> Messages
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="btn btn-outline" style="padding: 9px 14px;">
+          <i class="ph ph-shopping-cart" style="color: #34d399; font-size: 16px;"></i> Cart: <span style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ cart_count or 0 }}</span>
+        </a>
         <a href="{{ url_for('profile') }}" class="btn btn-primary">
-          <i class="ph ph-user-circle"></i> My Profile
+          <i class="ph ph-user-circle"></i> Profile
         </a>
       </div>
     </div>

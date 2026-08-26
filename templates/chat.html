@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusCycle - Peer Messages & Chat</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0b1120;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span { color: #34d399; }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-outline:hover, .btn-outline.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-outline.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+    .btn-sell {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+    .btn-sell:hover {
+      transform: translateY(-1px);
+    }
+
+    .cart-nav-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+
+    /* Main Chat Workspace Layout */
+    .chat-layout {
+      max-width: 1400px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 24px;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      height: calc(100vh - 120px);
+      min-height: 580px;
+    }
+
+    @media (max-width: 900px) {
+      .chat-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: calc(100vh - 100px);
+      }
+      .chat-sidebar {
+        display: {% if active_peer %}none{% else %}flex{% endif %} !important;
+      }
+      .chat-main-pane {
+        display: {% if active_peer %}flex{% else %}none{% endif %} !important;
+      }
+    }
+
+    /* Left Sidebar */
+    .chat-sidebar {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .sidebar-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.4);
+    }
+    .sidebar-title {
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffffff;
+    }
+    .sidebar-title i { color: #34d399; font-size: 20px; }
+
+    .btn-new-chat {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-new-chat:hover {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .search-box-wrap {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .search-input-wrap {
+      position: relative;
+    }
+    .search-input-wrap i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 16px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 12px 9px 36px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: #34d399;
+    }
+
+    /* Conversation List */
+    .convo-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .convo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #cbd5e1;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .convo-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+    .convo-item.active {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #ffffff;
+    }
+    .convo-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      color: #ffffff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .convo-item.active .convo-avatar {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .convo-details {
+      flex: 1;
+      min-width: 0;
+    }
+    .convo-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .convo-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .convo-time {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .convo-item.active .convo-time {
+      color: #34d399;
+    }
+    .convo-preview {
+      font-size: 12px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-convos {
+      padding: 40px 20px;
+      text-align: center;
+      color: #64748b;
+    }
+    .empty-convos i {
+      font-size: 40px;
+      margin-bottom: 8px;
+      color: #475569;
+    }
+
+    /* Right Main Chat Pane */
+    .chat-main-pane {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      position: relative;
+    }
+
+    /* Chat Header */
+    .chat-header {
+      padding: 14px 20px;
+      background: rgba(30, 41, 59, 0.45);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-peer-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .btn-mobile-back {
+      display: none;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+    @media (max-width: 900px) {
+      .btn-mobile-back { display: block; }
+    }
+    .peer-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .peer-title h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .peer-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .trust-badge-small {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Contextual Product Banner */
+    .chat-product-banner {
+      background: rgba(16, 185, 129, 0.08);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .banner-product-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .banner-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: #1e293b;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .banner-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .banner-text h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .banner-text p {
+      font-size: 12px;
+      color: #34d399;
+      font-weight: 700;
+    }
+    .quick-prompts {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quick-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-chip:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      color: #ffffff;
+    }
+
+    /* Message Stream Area */
+    .messages-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .msg-wrapper {
+      display: flex;
+      gap: 10px;
+      max-width: 75%;
+    }
+    .msg-wrapper.outgoing {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .msg-wrapper.incoming {
+      align-self: flex-start;
+    }
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      position: relative;
+      word-break: break-word;
+    }
+    .msg-wrapper.incoming .msg-bubble {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-wrapper.outgoing .msg-bubble {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    }
+    .msg-photo-attachment {
+      margin-top: 8px;
+      max-width: 280px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .msg-photo-attachment img {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .msg-photo-attachment img:hover {
+      transform: scale(1.02);
+    }
+    .msg-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    /* Message Input Bar */
+    .chat-input-bar {
+      padding: 14px 20px;
+      background: rgba(30, 41, 59, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .input-form {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-text-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .chat-text-input:focus {
+      border-color: #34d399;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .btn-attach {
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-attach:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+    .btn-send {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-send:hover {
+      background: #059669;
+      transform: scale(1.05);
+    }
+
+    /* Photo attachment input tray */
+    .attachment-tray {
+      display: none;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      align-items: center;
+      gap: 10px;
+    }
+    .attachment-tray input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+    }
+    .btn-close-tray {
+      background: none;
+      border: none;
+      color: #f87171;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Empty Chat Selection Screen */
+    .empty-chat-selection {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      text-align: center;
+    }
+    .empty-chat-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: #34d399;
+      margin-bottom: 20px;
+    }
+    .empty-chat-selection h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .empty-chat-selection p {
+      font-size: 14px;
+      color: #94a3b8;
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* New Chat Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      max-height: 80vh;
+      overflow: hidden;
+      animation: modalSlide 0.2s ease;
+    }
+    @keyframes modalSlide {
+      from { transform: translateY(15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #ffffff; }
+    .student-search-bar {
+      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .modal-students-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .student-picker-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      text-decoration: none;
+      color: #ffffff;
+      transition: all 0.2s;
+    }
+    .student-picker-item:hover {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .student-picker-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .student-picker-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon"><i class="ph ph-bicycle"></i></div>
+        Campus<span>Cycle</span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph ph-storefront"></i> Marketplace
+        </a>
+        <a href="{{ url_for('chat_view') }}" class="btn btn-outline active">
+          <i class="ph ph-chats-circle"></i> Messages
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="cart-nav-badge">
+          <i class="ph ph-shopping-cart" style="color: #34d399; font-size: 16px;"></i> Cart: <span style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ cart_count or 0 }}</span>
+        </a>
+        <a href="{{ url_for('sell_product') }}" class="btn btn-sell">
+          <i class="ph ph-plus-circle"></i> Sell Item
+        </a>
+        <a href="{{ url_for('profile') }}" class="btn btn-primary">
+          <i class="ph ph-user"></i> Profile
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline" style="color: #f87171;" title="Logout">
+          <i class="ph ph-sign-out"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Chat Workspace Layout -->
+  <div class="chat-layout">
+    
+    <!-- Left Sidebar: Conversations Directory -->
+    <aside class="chat-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <i class="ph ph-chat-teardrop-dots"></i> BRACU Messages
+        </div>
+        <button type="button" class="btn-new-chat" onclick="openNewChatModal()">
+          <i class="ph ph-plus-bold"></i> New Chat
+        </button>
+      </div>
+
+      <!-- Search Contacts -->
+      <div class="search-box-wrap">
+        <div class="search-input-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="convoSearchInput" class="search-input" placeholder="Search conversations or peers..." oninput="filterConversations()">
+        </div>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="convo-list" id="convoList">
+        {% if conversations and conversations|length > 0 %}
+          {% for c in conversations %}
+            <a href="{{ url_for('chat_view', user=c.student_id) }}" class="convo-item {% if active_peer and active_peer.student_id == c.student_id %}active{% endif %}" data-name="{{ c.name|lower }}" data-id="{{ c.student_id|lower }}" data-dept="{{ (c.department or '')|lower }}">
+              <div class="convo-avatar">
+                {{ c.name[0]|upper if c.name else 'U' }}
+              </div>
+              <div class="convo-details">
+                <div class="convo-name-row">
+                  <span class="convo-name">{{ c.name }}</span>
+                  <span class="convo-time">{{ c.formatted_time or '' }}</span>
+                </div>
+                <div class="convo-preview">
+                  {% if c.last_sender_id == session.get('student_id') %}
+                    <span style="color: #34d399; font-weight: 600;">You:</span>
+                  {% endif %}
+                  {{ c.last_message or 'Started conversation' }}
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <div class="empty-convos">
+            <i class="ph ph-chat-circle-dots"></i>
+            <p style="font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">No conversations yet</p>
+            <p style="font-size: 12px; margin-bottom: 16px;">Chat with BRACU peer sellers or buyers safely.</p>
+            <button type="button" class="btn-new-chat" onclick="openNewChatModal()" style="display: inline-flex;">
+              <i class="ph ph-user-plus"></i> Find Student
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Right Main Chat Pane -->
+    <main class="chat-main-pane">
+      {% if active_peer %}
+        
+        <!-- Active Chat Header -->
+        <div class="chat-header">
+          <div class="chat-peer-info">
+            <a href="{{ url_for('chat_view') }}" class="btn-mobile-back" title="Back to chats">
+              <i class="ph ph-arrow-left"></i>
+            </a>
+            <div class="peer-avatar">
+              {{ active_peer.name[0]|upper if active_peer.name else 'U' }}
+            </div>
+            <div class="peer-title">
+              <h2>
+                {{ active_peer.name }}
+                <span class="trust-badge-small">
+                  <i class="ph-fill ph-star"></i> {{ "%.1f"|format(active_peer_trust_score or 4.5) }}
+                </span>
+              </h2>
+              <div class="peer-meta">
+                <span><i class="ph ph-identification-badge"></i> {{ active_peer.student_id }}</span>
+                <span>&bull;</span>
+                <span><i class="ph ph-graduation-cap"></i> {{ active_peer.department or 'BRACU' }} (Sem {{ active_peer.semester or 'N/A' }})</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('marketplace') }}" class="btn btn-outline" style="font-size: 12px; padding: 7px 12px;">
+              <i class="ph ph-storefront"></i> View Listings
+            </a>
+          </div>
+        </div>
+
+        <!-- Optional Contextual Product Banner -->
+        {% if product_context %}
+          <div class="chat-product-banner">
+            <div class="banner-product-info">
+              <div class="banner-thumb">
+                <img src="{{ product_context.photo or 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120' }}" alt="{{ product_context.product_name }}">
+              </div>
+              <div class="banner-text">
+                <h4>{{ product_context.product_name }}</h4>
+                <p>৳{{ product_context.selling_price }} &bull; {{ product_context.category or 'Academic' }}</p>
+              </div>
+            </div>
+            
+            <!-- Quick Inquiry Pills -->
+            <div class="quick-prompts">
+              <button type="button" class="quick-chip" onclick="sendQuickPrompt('Hi! Is this item still available?')">
+                👋 Is this available?
+              </button>
+              <button type="button" class="quick-chip" onclick="sendQuickPrompt('Can we meet at UB Gate / Library for the handover?')">
+                🤝 Meet at UB Gate?
+              </button>
+              <button type="button" class="quick-chip" onclick="sendQuickPrompt('Can you offer any student discount on this?')">
+                💰 Discount possible?
+              </button>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Messages Stream -->
+        <div class="messages-stream" id="messagesStream">
+          {% if messages and messages|length > 0 %}
+            {% for m in messages %}
+              <div class="msg-wrapper {% if m.sender_id == session.get('student_id') %}outgoing{% else %}incoming{% endif %}" data-chat-id="{{ m.chat_id }}">
+                {% if m.sender_id != session.get('student_id') %}
+                  <div class="msg-avatar">
+                    {{ active_peer.name[0]|upper if active_peer.name else 'P' }}
+                  </div>
+                {% endif %}
+                <div class="msg-bubble">
+                  {% if m.text %}
+                    <div>{{ m.text }}</div>
+                  {% endif %}
+                  {% if m.photo %}
+                    <div class="msg-photo-attachment">
+                      <a href="{{ m.photo }}" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ m.photo }}" alt="Attachment" loading="lazy">
+                      </a>
+                    </div>
+                  {% endif %}
+                  <div class="msg-footer">
+                    <span>{{ m.formatted_time or '' }}</span>
+                    {% if m.sender_id == session.get('student_id') %}
+                      <i class="ph ph-checks" style="font-size: 13px;"></i>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align: center; margin: auto; color: #64748b; padding: 40px 20px;">
+              <i class="ph ph-hand-waving" style="font-size: 48px; color: #10b981; margin-bottom: 12px; display: block;"></i>
+              <h4 style="font-size: 16px; color: #ffffff; margin-bottom: 6px;">Start the Conversation</h4>
+              <p style="font-size: 13px;">Say hello or ask about item details and meetup locations!</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar">
+          <!-- Optional Photo URL Tray -->
+          <div class="attachment-tray" id="attachmentTray">
+            <i class="ph ph-image" style="color: #34d399; font-size: 18px;"></i>
+            <input type="url" id="photoUrlInput" placeholder="Paste image/photo URL (e.g. https://... or uploaded link)...">
+            <button type="button" class="btn-close-tray" onclick="toggleAttachmentTray()" title="Remove photo">
+              <i class="ph ph-x-bold"></i>
+            </button>
+          </div>
+
+          <form id="chatForm" onsubmit="handleSendMessage(event)" class="input-form">
+            <input type="hidden" id="receiverId" name="receiver_id" value="{{ active_peer.student_id }}">
+            <button type="button" class="btn-attach" onclick="toggleAttachmentTray()" title="Attach Photo URL">
+              <i class="ph ph-image"></i>
+            </button>
+            <input type="text" id="messageInput" class="chat-text-input" placeholder="Type your message to {{ active_peer.name }}... (Press Enter to send)" autocomplete="off" autofocus>
+            <button type="submit" class="btn-send" id="sendBtn" title="Send Message">
+              <i class="ph ph-paper-plane-right-fill"></i>
+            </button>
+          </form>
+        </div>
+
+      {% else %}
+        
+        <!-- Empty State: No Peer Selected -->
+        <div class="empty-chat-selection">
+          <div class="empty-chat-icon">
+            <i class="ph ph-chat-teardrop-text"></i>
+          </div>
+          <h3>Your Campus Messenger</h3>
+          <p>
+            Select an existing conversation from the left sidebar or start a new direct chat with any registered BRAC University student.
+          </p>
+          <button type="button" class="btn btn-primary" onclick="openNewChatModal()">
+            <i class="ph ph-plus-circle"></i> Start New Peer Chat
+          </button>
+        </div>
+
+      {% endif %}
+    </main>
+
+  </div>
+
+  <!-- New Chat Modal -->
+  <div class="modal-backdrop" id="newChatModal" onclick="closeNewChatModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="ph ph-users-three" style="color: #34d399;"></i> Start New Chat with Peer</h3>
+        <button type="button" class="modal-close" onclick="closeNewChatModal()">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <div class="student-search-bar">
+        <div class="search-input-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="modalStudentSearch" class="search-input" placeholder="Search by name, student ID, or department..." oninput="filterModalStudents()">
+        </div>
+      </div>
+
+      <div class="modal-students-list" id="modalStudentsList">
+        {% if all_students and all_students|length > 0 %}
+          {% for s in all_students %}
+            <a href="{{ url_for('chat_view', user=s.student_id) }}" class="student-picker-item" data-search="{{ (s.name ~ ' ' ~ s.student_id ~ ' ' ~ (s.department or ''))|lower }}">
+              <div class="student-picker-left">
+                <div class="student-picker-avatar">
+                  {{ s.name[0]|upper if s.name else 'U' }}
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 14px;">{{ s.name }}</div>
+                  <div style="font-size: 12px; color: #94a3b8;">
+                    {{ s.student_id }} &bull; {{ s.department or 'BRACU' }} (Sem {{ s.semester or 'N/A' }})
+                  </div>
+                </div>
+              </div>
+              <span class="btn-new-chat" style="pointer-events: none;">
+                <i class="ph ph-chat"></i> Message
+              </span>
+            </a>
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; color: #64748b; padding: 24px;">
+            No other students registered yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const currentStudentId = "{{ session.get('student_id') }}";
+    const activePeerId = "{{ active_peer.student_id if active_peer else '' }}";
+
+    // Auto scroll chat to bottom
+    function scrollToBottom() {
+      const stream = document.getElementById('messagesStream');
+      if (stream) {
+        stream.scrollTop = stream.scrollHeight;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      scrollToBottom();
+    });
+
+    // Toggle Photo URL Attachment Tray
+    function toggleAttachmentTray() {
+      const tray = document.getElementById('attachmentTray');
+      if (!tray) return;
+      if (tray.style.display === 'flex') {
+        tray.style.display = 'none';
+        document.getElementById('photoUrlInput').value = '';
+      } else {
+        tray.style.display = 'flex';
+        document.getElementById('photoUrlInput').focus();
+      }
+    }
+
+    // Quick Inquiry Prompts
+    function sendQuickPrompt(promptText) {
+      const input = document.getElementById('messageInput');
+      if (input) {
+        input.value = promptText;
+        handleSendMessageDirect(promptText, '');
+      }
+    }
+
+    function handleSendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      const photoInput = document.getElementById('photoUrlInput');
+      const photo = photoInput ? photoInput.value.trim() : '';
+      if (!text && !photo) return;
+      handleSendMessageDirect(text, photo);
+    }
+
+    function handleSendMessageDirect(text, photo) {
+      if (!activePeerId) return;
+
+      const input = document.getElementById('messageInput');
+      const photoInput = document.getElementById('photoUrlInput');
+
+      // Optimistic UI Append
+      const stream = document.getElementById('messagesStream');
+      const tempId = 'msg-' + Date.now();
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let photoHtml = '';
+      if (photo) {
+        photoHtml = '<div class="msg-photo-attachment"><a href="' + photo + '" target="_blank"><img src="' + photo + '" alt="Attachment"></a></div>';
+      }
+
+      const tempBubble = document.createElement('div');
+      tempBubble.className = 'msg-wrapper outgoing';
+      tempBubble.id = tempId;
+      tempBubble.innerHTML = `
+        <div class="msg-bubble">
+          ${text ? `<div>${escapeHtml(text)}</div>` : ''}
+          ${photoHtml}
+          <div class="msg-footer">
+            <span>${timeStr}</span>
+            <i class="ph ph-check" style="font-size: 13px;"></i>
+          </div>
+        </div>
+      `;
+      if (stream) {
+        stream.appendChild(tempBubble);
+        scrollToBottom();
+      }
+
+      // Reset Inputs
+      if (input) input.value = '';
+      if (photoInput) photoInput.value = '';
+      const tray = document.getElementById('attachmentTray');
+      if (tray) tray.style.display = 'none';
+
+      // Send to Backend API
+      fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          receiver_id: activePeerId,
+          text: text,
+          photo: photo
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success) {
+          const sentMsg = document.getElementById(tempId);
+          if (sentMsg) {
+            if (data.chat && data.chat.chat_id) {
+              sentMsg.setAttribute('data-chat-id', data.chat.chat_id);
+            }
+            const checkIcon = sentMsg.querySelector('.msg-footer i');
+            if (checkIcon) checkIcon.className = 'ph ph-checks';
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Error sending message:', err);
+      });
+    }
+
+    // Helper: Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // Live Message Polling (every 3 seconds)
+    if (activePeerId) {
+      setInterval(() => {
+        fetch('/api/chat/messages/' + activePeerId)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.success && data.messages) {
+              const stream = document.getElementById('messagesStream');
+              if (!stream) return;
+
+              let hasNew = false;
+              data.messages.forEach(msg => {
+                const existing = document.querySelector(`[data-chat-id="${msg.chat_id}"]`);
+                if (!existing) {
+                  hasNew = true;
+                  const isMe = msg.sender_id === currentStudentId;
+                  const bubble = document.createElement('div');
+                  bubble.className = 'msg-wrapper ' + (isMe ? 'outgoing' : 'incoming');
+                  bubble.setAttribute('data-chat-id', msg.chat_id);
+
+                  let photoContent = '';
+                  if (msg.photo) {
+                    photoContent = '<div class="msg-photo-attachment"><a href="' + msg.photo + '" target="_blank"><img src="' + msg.photo + '" alt="Attachment"></a></div>';
+                  }
+
+                  let avatarHtml = '';
+                  if (!isMe) {
+                    const initial = (msg.sender_name || 'P')[0].toUpperCase();
+                    avatarHtml = '<div class="msg-avatar">' + initial + '</div>';
+                  }
+
+                  bubble.innerHTML = `
+                    ${avatarHtml}
+                    <div class="msg-bubble">
+                      ${msg.text ? `<div>${escapeHtml(msg.text)}</div>` : ''}
+                      ${photoContent}
+                      <div class="msg-footer">
+                        <span>${msg.formatted_time || ''}</span>
+                        ${isMe ? '<i class="ph ph-checks" style="font-size: 13px;"></i>' : ''}
+                      </div>
+                    </div>
+                  `;
+                  stream.appendChild(bubble);
+                }
+              });
+
+              if (hasNew) {
+                scrollToBottom();
+              }
+            }
+          })
+          .catch(err => console.log('Poll heartbeat'));
+      }, 3000);
+    }
+
+    // Search / Filter Conversations on Sidebar
+    function filterConversations() {
+      const query = document.getElementById('convoSearchInput').value.toLowerCase().trim();
+      const items = document.querySelectorAll('.convo-item');
+      items.forEach(item => {
+        const name = item.getAttribute('data-name') || '';
+        const id = item.getAttribute('data-id') || '';
+        const dept = item.getAttribute('data-dept') || '';
+        if (name.includes(query) || id.includes(query) || dept.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // Modal Handlers
+    function openNewChatModal() {
+      const modal = document.getElementById('newChatModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('modalStudentSearch').focus();
+      }
+    }
+
+    function closeNewChatModal(e) {
+      if (e && e.target !== document.getElementById('newChatModal') && !e.target.classList.contains('modal-close')) {
+        return;
+      }
+      const modal = document.getElementById('newChatModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function filterModalStudents() {
+      const query = document.getElementById('modalStudentSearch').value.toLowerCase().trim();
+      const items = document.querySelectorAll('.student-picker-item');
+      items.forEach(item => {
+        const searchVal = item.getAttribute('data-search') || '';
+        if (searchVal.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
