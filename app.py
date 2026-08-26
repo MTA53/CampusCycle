@@ -1,12 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import date, datetime
 import os
 import random
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'campuscycle_secret_key_bracu_2026')
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
@@ -74,6 +80,60 @@ def get_cart_count(student_id):
         return 0
 
 
+def get_wishlist_count(student_id):
+    """Returns the total number of products saved in student's wishlist."""
+    if not student_id:
+        return 0
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT COUNT(i.product_id) as count
+            FROM wishlist w
+            JOIN includes i ON w.wishlist_id = i.wishlist_id
+            WHERE w.student_id = %s
+        """, (student_id,))
+        row = cur.fetchone()
+        cur.close()
+        return int(row['count']) if row and row['count'] is not None else 0
+    except Exception:
+        return 0
+
+
+def get_unread_notifications_count(student_id):
+    """Returns the count of unread notifications for a student."""
+    if not student_id:
+        return 0
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT COUNT(*) as count
+            FROM notification
+            WHERE buyer_notification = %s AND notification_status = 'unread'
+        """, (student_id,))
+        row = cur.fetchone()
+        cur.close()
+        return int(row['count']) if row and row['count'] is not None else 0
+    except Exception:
+        return 0
+
+
+@app.context_processor
+def inject_global_counts():
+    """Injects cart, wishlist, and unread notification counts globally across all templates."""
+    student_id = session.get('student_id')
+    if student_id:
+        return {
+            'global_cart_count': get_cart_count(student_id),
+            'global_wishlist_count': get_wishlist_count(student_id),
+            'global_unread_notifications_count': get_unread_notifications_count(student_id)
+        }
+    return {
+        'global_cart_count': 0,
+        'global_wishlist_count': 0,
+        'global_unread_notifications_count': 0
+    }
+
+
 def format_message_time(dt):
     """Formats timestamp into a friendly human-readable format."""
     if not dt:
@@ -99,7 +159,8 @@ def format_message_time(dt):
 def home():
     student_id = session.get('student_id')
     cart_count = get_cart_count(student_id) if student_id else 0
-    return render_template('home.html', cart_count=cart_count)
+    wishlist_count = get_wishlist_count(student_id) if student_id else 0
+    return render_template('home.html', cart_count=cart_count, wishlist_count=wishlist_count)
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -231,30 +292,45 @@ def login():
 
 
 @app.route('/profile')
-def profile():
-    student_id = session.get('student_id')
-    if not student_id:
+@app.route('/profile/<student_id>')
+def profile(student_id=None):
+    current_student_id = session.get('student_id')
+    if not current_student_id:
         return redirect(url_for('login'))
+
+    target_student_id = student_id if student_id else current_student_id
+    is_own_profile = (target_student_id == current_student_id)
 
     cur = mysql.connection.cursor()
 
-    cur.execute("SELECT * FROM user WHERE student_id = %s", (student_id,))
+    cur.execute("SELECT * FROM user WHERE student_id = %s", (target_student_id,))
     user = cur.fetchone()
 
     if not user:
         cur.close()
-        session.clear()
-        return redirect(url_for('login'))
+        return redirect(url_for('profile'))
 
     cur.execute(
         "SELECT * FROM verification WHERE student_id = %s ORDER BY verification_id DESC LIMIT 1", 
-        (student_id,)
+        (target_student_id,)
     )
     verification = cur.fetchone()
 
+    if not verification:
+        cur.execute(
+            "INSERT INTO verification (verification_status, verified_at, student_id) VALUES ('verified', NOW(), %s)",
+            (target_student_id,)
+        )
+        mysql.connection.commit()
+        cur.execute(
+            "SELECT * FROM verification WHERE student_id = %s ORDER BY verification_id DESC LIMIT 1", 
+            (target_student_id,)
+        )
+        verification = cur.fetchone()
+
     cur.execute(
         "SELECT AVG(rating) as avg_rating, COUNT(r_id) as total_reviews FROM review WHERE reviewee_id = %s",
-        (student_id,)
+        (target_student_id,)
     )
     trust_data = cur.fetchone()
 
@@ -279,17 +355,18 @@ def profile():
         LEFT JOIN user u ON p.student_id = u.student_id
         WHERE o.st_buyer_id = %s AND (o.order_type = 'buy' OR o.order_type IS NULL)
         ORDER BY o.order_id DESC
-    """, (student_id,))
+    """, (target_student_id,))
     purchases = cur.fetchall() or []
 
     cur.execute("""
         SELECT product_id, product_name, category, description,
                selling_price, recommended_price, warranty, used_in_course,
-               purchase_date, sold_date, order_id
+               purchase_date, sold_date, order_id,
+               (SELECT photo FROM product_photo pp WHERE pp.product_id = product.product_id LIMIT 1) as photo
         FROM product
         WHERE student_id = %s
         ORDER BY product_id DESC
-    """, (student_id,))
+    """, (target_student_id,))
     sales = cur.fetchall() or []
 
     cur.execute("""
@@ -302,11 +379,12 @@ def profile():
         LEFT JOIN product p ON a.product_id = p.product_id
         WHERE (o.st_buyer_id = %s OR p.student_id = %s) AND o.order_type = 'exchange'
         ORDER BY o.order_id DESC
-    """, (student_id, student_id))
+    """, (target_student_id, target_student_id))
     exchanges = cur.fetchall() or []
 
     cur.close()
-    cart_count = get_cart_count(student_id)
+    cart_count = get_cart_count(current_student_id)
+    wishlist_count = get_wishlist_count(current_student_id)
 
     return render_template(
         'profile.html',
@@ -317,7 +395,9 @@ def profile():
         purchases=purchases,
         sales=sales,
         exchanges=exchanges,
-        cart_count=cart_count
+        cart_count=cart_count,
+        wishlist_count=wishlist_count,
+        is_own_profile=is_own_profile
     )
 
 
@@ -328,21 +408,16 @@ def update_profile():
     if not student_id:
         return redirect(url_for('login'))
 
-    department = request.form.get('department', '').strip()
-    semester = request.form.get('semester', '').strip()
-    mobile_number = request.form.get('mobile_number', '').strip()
+    department = request.form.get('department')
+    semester = request.form.get('semester')
+    mobile_number = request.form.get('mobile_number')
 
     cur = mysql.connection.cursor()
     cur.execute("""
         UPDATE user 
         SET department = %s, semester = %s, mobile_number = %s
         WHERE student_id = %s
-    """, (
-        department if department else None,
-        semester if semester else None,
-        mobile_number if mobile_number else None,
-        student_id
-    ))
+    """, (department, semester, mobile_number, student_id))
     mysql.connection.commit()
     cur.close()
 
@@ -367,9 +442,11 @@ def marketplace():
     cur.execute("""
         SELECT p.product_id, p.product_name, p.category, p.description,
                p.selling_price, p.recommended_price, p.used_in_course,
-               p.purchase_date, p.sold_date,
+               p.purchase_date, p.sold_date, p.student_id AS seller_id,
+               u.name AS seller_name,
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM product p
+        LEFT JOIN user u ON p.student_id = u.student_id
         ORDER BY p.product_id DESC
     """)
     products = cur.fetchall() or []
@@ -379,8 +456,9 @@ def marketplace():
 
     cur.close()
     cart_count = get_cart_count(student_id) if student_id else 0
+    wishlist_count = get_wishlist_count(student_id) if student_id else 0
 
-    return render_template('marketplace.html', products=products, cart_count=cart_count)
+    return render_template('marketplace.html', products=products, cart_count=cart_count, wishlist_count=wishlist_count)
 
 
 @app.route('/product/<int:product_id>')
@@ -488,10 +566,31 @@ def sell_product():
             ))
             target_id = cur.lastrowid
 
+        # 1. Handle device image file uploads
+        uploaded_files = request.files.getlist('product_images')
+        for file in uploaded_files:
+            if file and file.filename and file.filename.strip():
+                orig_filename = secure_filename(file.filename)
+                if orig_filename:
+                    ext = os.path.splitext(orig_filename)[1].lower()
+                    if ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.jfif', '.heic', '.bmp']:
+                        unique_filename = f"prod_{target_id}_{int(datetime.now().timestamp())}_{random.randint(100, 999)}{ext}"
+                        save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                        file.save(save_path)
+                        photo_url = f"/static/uploads/{unique_filename}"
+                        try:
+                            cur.execute("""
+                                INSERT INTO product_photo (product_id, photo)
+                                VALUES (%s, %s)
+                            """, (target_id, photo_url))
+                        except Exception:
+                            pass
+
+        # 2. Handle image URLs if provided
         photos = request.form.getlist('photos[]')
         for p_url in photos:
             p_url = p_url.strip()
-            if p_url:
+            if p_url and not p_url.startswith('https://example.com'):
                 try:
                     cur.execute("""
                         INSERT INTO product_photo (product_id, photo)
@@ -515,6 +614,38 @@ def sell_product():
             """, (target_id, purchase_date, sold_date))
         except Exception:
             pass
+
+        # Trigger instant notifications to students who wishlisted items in this course, category, or product name
+        if used_in_course or category or product_name:
+            try:
+                search_word = product_name.split()[0] if product_name else ''
+                cur.execute("""
+                    SELECT DISTINCT w.student_id, w.wishlist_id, u.name AS seller_name
+                    FROM wishlist w
+                    JOIN includes i ON w.wishlist_id = i.wishlist_id
+                    JOIN product p ON i.product_id = p.product_id
+                    JOIN user u ON u.student_id = %s
+                    WHERE w.student_id != %s
+                      AND (
+                          (p.used_in_course IS NOT NULL AND p.used_in_course != '' AND LOWER(p.used_in_course) = LOWER(%s))
+                          OR (p.category IS NOT NULL AND LOWER(p.category) = LOWER(%s))
+                          OR (p.product_name IS NOT NULL AND LOWER(p.product_name) LIKE LOWER(%s))
+                      )
+                """, (student_id, student_id, used_in_course, category, f"%{search_word}%"))
+                matching_users = cur.fetchall()
+                for mu in matching_users:
+                    notif_text = f"⚡ Wishlist Match: '{product_name}'"
+                    if used_in_course:
+                        notif_text += f" (used in {used_in_course})"
+                    notif_text += f" was just posted by {mu.get('seller_name', 'a peer')} for ৳{selling_price:.0f}!"
+                    
+                    cur.execute("""
+                        INSERT INTO notification 
+                        (buyer_notification, user_notification, wishlist_id, text, notification_type, notification_status)
+                        VALUES (%s, %s, %s, %s, 'wishlist_match', 'unread')
+                    """, (mu['student_id'], student_id, mu['wishlist_id'], notif_text))
+            except Exception as e:
+                print("Error creating wishlist match notifications:", e)
 
         mysql.connection.commit()
         cur.close()
@@ -555,13 +686,42 @@ def cart_view():
     cart_items = cur.fetchall() or []
 
     total_bill = sum(float(item['selling_price'] or 0) for item in cart_items)
+
+    # Strict Course Code Recommendation Engine
+    cart_pids = [item['product_id'] for item in cart_items]
+    tracked_courses = [item['used_in_course'].strip().upper() for item in cart_items if item.get('used_in_course') and item.get('used_in_course').strip()]
+    tracked_courses = list(dict.fromkeys(tracked_courses))  # Unique list
+
+    recommendations = []
+    if tracked_courses:
+        format_strings = ','.join(['%s'] * len(tracked_courses))
+        query = f"""
+            SELECT p.product_id, p.product_name, p.category, p.selling_price, 
+                   p.recommended_price, p.used_in_course, u.name as seller_name,
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
+            FROM product p
+            LEFT JOIN user u ON p.student_id = u.student_id
+            WHERE p.sold_date IS NULL
+              AND UPPER(TRIM(p.used_in_course)) IN ({format_strings})
+        """
+        params = list(tracked_courses)
+        if cart_pids:
+            p_format = ','.join(['%s'] * len(cart_pids))
+            query += f" AND p.product_id NOT IN ({p_format})"
+            params.extend(cart_pids)
+        query += " ORDER BY p.product_id DESC LIMIT 6"
+        cur.execute(query, tuple(params))
+        recommendations = list(cur.fetchall() or [])
+
     cur.close()
 
     return render_template(
         'cart.html',
         cart_items=cart_items,
         total_bill=round(total_bill, 2),
-        cart_count=len(cart_items)
+        cart_count=len(cart_items),
+        recommendations=recommendations,
+        tracked_courses=tracked_courses
     )
 
 
@@ -683,6 +843,328 @@ def checkout():
     cur.close()
 
     return redirect(url_for('profile'))
+
+
+# =========================================================================
+# WISHLIST & NOTIFICATION APPLICATION ROUTES (WISHLIST, INCLUDES, NOTIFICATION)
+# =========================================================================
+
+@app.route('/wishlist')
+def wishlist_view():
+    student_id = session.get('student_id')
+    if not student_id:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+
+    # 1. Fetch or initialize wishlist record for this student
+    cur.execute("SELECT wishlist_id, recommendation FROM wishlist WHERE student_id = %s LIMIT 1", (student_id,))
+    wishlist_row = cur.fetchone()
+    if not wishlist_row:
+        cur.execute("INSERT INTO wishlist (student_id, recommendation) VALUES (%s, %s)", (student_id, ''))
+        mysql.connection.commit()
+        cur.execute("SELECT wishlist_id, recommendation FROM wishlist WHERE student_id = %s LIMIT 1", (student_id,))
+        wishlist_row = cur.fetchone()
+
+    wishlist_id = wishlist_row['wishlist_id']
+    stored_recommendation = wishlist_row['recommendation'] or ''
+
+    # 2. Fetch all products currently saved in the user's wishlist
+    cur.execute("""
+        SELECT p.product_id, p.product_name, p.category, p.description,
+               p.selling_price, p.recommended_price, p.used_in_course,
+               p.sold_date, p.student_id AS seller_id, u.name AS seller_name,
+               u.trust_score AS seller_trust_score,
+               (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
+        FROM includes i
+        JOIN product p ON i.product_id = p.product_id
+        JOIN user u ON p.student_id = u.student_id
+        WHERE i.wishlist_id = %s
+        ORDER BY p.product_id DESC
+    """, (wishlist_id,))
+    wishlist_items = cur.fetchall()
+
+    wishlisted_product_ids = [item['product_id'] for item in wishlist_items]
+    wishlisted_courses = list(set([item['used_in_course'].strip().upper() for item in wishlist_items if item['used_in_course'] and item['used_in_course'].strip()]))
+    wishlisted_categories = list(set([item['category'].strip() for item in wishlist_items if item['category'] and item['category'].strip()]))
+
+    # 3. Intelligent Course & Related Recommendations
+    recommendations = []
+    if wishlisted_courses:
+        format_strings = ','.join(['%s'] * len(wishlisted_courses))
+        query = f"""
+            SELECT DISTINCT p.product_id, p.product_name, p.category, p.description,
+                   p.selling_price, p.recommended_price, p.used_in_course,
+                   u.name AS seller_name, u.trust_score AS seller_trust_score,
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo,
+                   'Same Course: ' AS reason_type, p.used_in_course AS reason_value
+            FROM product p
+            JOIN user u ON p.student_id = u.student_id
+            WHERE p.sold_date IS NULL
+              AND p.student_id != %s
+              AND UPPER(p.used_in_course) IN ({format_strings})
+        """
+        params = [student_id] + wishlisted_courses
+        if wishlisted_product_ids:
+            p_format = ','.join(['%s'] * len(wishlisted_product_ids))
+            query += f" AND p.product_id NOT IN ({p_format})"
+            params += wishlisted_product_ids
+        query += " ORDER BY p.product_id DESC LIMIT 8"
+        cur.execute(query, tuple(params))
+        recommendations = list(cur.fetchall())
+
+    # Fallback or supplementary recommendations
+    if len(recommendations) < 4:
+        exclude_ids = wishlisted_product_ids + [r['product_id'] for r in recommendations]
+        fallback_query = """
+            SELECT DISTINCT p.product_id, p.product_name, p.category, p.description,
+                   p.selling_price, p.recommended_price, p.used_in_course,
+                   u.name AS seller_name, u.trust_score AS seller_trust_score,
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo,
+                   'Popular on Campus' AS reason_type, p.category AS reason_value
+            FROM product p
+            JOIN user u ON p.student_id = u.student_id
+            WHERE p.sold_date IS NULL
+              AND p.student_id != %s
+        """
+        params = [student_id]
+        if exclude_ids:
+            p_format = ','.join(['%s'] * len(exclude_ids))
+            fallback_query += f" AND p.product_id NOT IN ({p_format})"
+            params += exclude_ids
+        fallback_query += " ORDER BY p.product_id DESC LIMIT %s"
+        needed = 8 - len(recommendations)
+        params.append(needed)
+        cur.execute(fallback_query, tuple(params))
+        recommendations.extend(cur.fetchall())
+
+    # 4. Fetch Wishlist & Match Notifications for this student
+    cur.execute("""
+        SELECT n.n_id, n.text, n.notification_type, n.notification_status,
+               n.notification_date, n.user_notification AS sender_id,
+               u.name AS sender_name
+        FROM notification n
+        LEFT JOIN user u ON n.user_notification = u.student_id
+        WHERE n.buyer_notification = %s
+        ORDER BY n.notification_date DESC
+        LIMIT 15
+    """, (student_id,))
+    notifications = cur.fetchall()
+
+    cart_count = get_cart_count(student_id)
+    wishlist_count = len(wishlist_items)
+    unread_notifs = sum(1 for n in notifications if n['notification_status'] == 'unread')
+
+    cur.close()
+
+    return render_template(
+        'wishlist.html',
+        wishlist_items=wishlist_items,
+        recommendations=recommendations,
+        notifications=notifications,
+        wishlisted_courses=wishlisted_courses,
+        cart_count=cart_count,
+        wishlist_count=wishlist_count,
+        unread_notifs=unread_notifs,
+        stored_recommendation=stored_recommendation
+    )
+
+
+@app.route('/wishlist/add/<int:product_id>', methods=['GET', 'POST'])
+def add_to_wishlist(product_id):
+    student_id = session.get('student_id')
+    if not student_id:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Please login first', 'redirect': url_for('login')}), 401
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+
+    # Get product info
+    cur.execute("SELECT product_id, product_name, category, used_in_course, selling_price FROM product WHERE product_id = %s", (product_id,))
+    product = cur.fetchone()
+    if not product:
+        cur.close()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Product not found'}), 404
+        return redirect(url_for('marketplace'))
+
+    # Get or create wishlist
+    cur.execute("SELECT wishlist_id FROM wishlist WHERE student_id = %s LIMIT 1", (student_id,))
+    w_row = cur.fetchone()
+    if not w_row:
+        cur.execute("INSERT INTO wishlist (student_id, recommendation) VALUES (%s, %s)", (student_id, ''))
+        wishlist_id = cur.lastrowid
+    else:
+        wishlist_id = w_row['wishlist_id']
+
+    # Insert into includes if not already present
+    cur.execute("SELECT * FROM includes WHERE wishlist_id = %s AND product_id = %s", (wishlist_id, product_id))
+    already_included = cur.fetchone()
+    if not already_included:
+        cur.execute("INSERT INTO includes (wishlist_id, product_id) VALUES (%s, %s)", (wishlist_id, product_id))
+
+    # Fetch course-based recommendations for instant feedback
+    course = product.get('used_in_course', '')
+    course_recommendations = []
+    if course and course.strip():
+        cur.execute("""
+            SELECT p.product_id, p.product_name, p.category, p.selling_price, p.used_in_course,
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
+            FROM product p
+            WHERE p.sold_date IS NULL
+              AND p.student_id != %s
+              AND p.product_id != %s
+              AND UPPER(p.used_in_course) = UPPER(%s)
+            LIMIT 4
+        """, (student_id, product_id, course.strip()))
+        course_recommendations = list(cur.fetchall())
+
+        # Update wishlist recommendation text
+        rec_text = f"Smart recommendations for {course.strip()}: " + ", ".join([r['product_name'] for r in course_recommendations]) if course_recommendations else f"Added {product['product_name']} for {course.strip()}"
+        cur.execute("UPDATE wishlist SET recommendation = %s WHERE wishlist_id = %s", (rec_text, wishlist_id))
+
+    mysql.connection.commit()
+    cur.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({
+            'success': True,
+            'message': f"Added '{product['product_name']}' to your wishlist!",
+            'already_in': bool(already_included),
+            'wishlist_count': get_wishlist_count(student_id),
+            'course': course,
+            'recommendations': course_recommendations
+        })
+
+    return redirect(url_for('wishlist_view'))
+
+
+@app.route('/wishlist/remove/<int:product_id>', methods=['GET', 'POST'])
+def remove_from_wishlist(product_id):
+    student_id = session.get('student_id')
+    if not student_id:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Please login first'}), 401
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT wishlist_id FROM wishlist WHERE student_id = %s LIMIT 1", (student_id,))
+    w_row = cur.fetchone()
+    if w_row:
+        cur.execute("DELETE FROM includes WHERE wishlist_id = %s AND product_id = %s", (w_row['wishlist_id'], product_id))
+        mysql.connection.commit()
+    cur.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({
+            'success': True,
+            'message': 'Item removed from wishlist',
+            'wishlist_count': get_wishlist_count(student_id)
+        })
+
+    return redirect(url_for('wishlist_view'))
+
+
+@app.route('/api/wishlist/recommendations/<int:product_id>')
+def api_wishlist_recommendations(product_id):
+    student_id = session.get('student_id')
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT product_id, product_name, category, used_in_course FROM product WHERE product_id = %s", (product_id,))
+    product = cur.fetchone()
+    if not product:
+        cur.close()
+        return jsonify({'success': False, 'recommendations': []})
+
+    course = product.get('used_in_course', '')
+    recs = []
+    if course and course.strip():
+        cur.execute("""
+            SELECT p.product_id, p.product_name, p.category, p.selling_price, p.used_in_course,
+                   u.name AS seller_name,
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
+            FROM product p
+            JOIN user u ON p.student_id = u.student_id
+            WHERE p.sold_date IS NULL
+              AND p.product_id != %s
+              AND UPPER(p.used_in_course) = UPPER(%s)
+            LIMIT 4
+        """, (product_id, course.strip()))
+        recs = cur.fetchall()
+
+    cur.close()
+    return jsonify({
+        'success': True,
+        'course': course,
+        'recommendations': recs
+    })
+
+
+@app.route('/api/notifications/read/<int:n_id>', methods=['POST'])
+def mark_notification_read(n_id):
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'success': False}), 401
+
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notification SET notification_status = 'read' WHERE n_id = %s AND buyer_notification = %s", (n_id, student_id))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'success': True, 'unread_count': get_unread_notifications_count(student_id)})
+
+
+@app.route('/api/notifications/read-all', methods=['POST'])
+def mark_all_notifications_read():
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'success': False}), 401
+
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notification SET notification_status = 'read' WHERE buyer_notification = %s", (student_id,))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'success': True, 'unread_count': 0})
+
+
+@app.route('/api/notifications/latest')
+def get_latest_notifications():
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'success': False, 'notifications': [], 'unread_count': 0})
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT n.n_id, n.text, n.notification_type, n.notification_status,
+               n.notification_date, n.user_notification AS sender_id,
+               u.name AS sender_name
+        FROM notification n
+        LEFT JOIN user u ON n.user_notification = u.student_id
+        WHERE n.buyer_notification = %s
+        ORDER BY n.notification_date DESC
+        LIMIT 10
+    """, (student_id,))
+    notifs = cur.fetchall() or []
+
+    formatted_notifs = []
+    for notif in notifs:
+        dt = notif.get('notification_date')
+        time_str = format_message_time(dt) if dt else 'Recently'
+        formatted_notifs.append({
+            'n_id': notif['n_id'],
+            'text': notif['text'],
+            'type': notif['notification_type'],
+            'status': notif['notification_status'],
+            'time': time_str,
+            'sender_name': notif.get('sender_name') or 'Peer'
+        })
+
+    cur.close()
+    unread_count = get_unread_notifications_count(student_id)
+    return jsonify({
+        'success': True,
+        'notifications': formatted_notifs,
+        'unread_count': unread_count
+    })
 
 
 # =========================================================================
@@ -897,13 +1379,16 @@ def api_chat_send():
 
     # 3. Create a peer notification
     try:
+        sender_name = session.get('user_name') or 'A student'
+        msg_preview = f'"{text[:40]}..."' if (text and len(text) > 40) else (f'"{text}"' if text else 'Sent an attachment photo')
+        notif_text = f"💬 {sender_name} texted you: {msg_preview}"
         cur.execute("""
             INSERT INTO notification 
             (buyer_notification, user_notification, text, notification_type, notification_status)
             VALUES (%s, %s, %s, 'chat', 'unread')
-        """, (receiver_id, student_id, f"New message: {text[:50]}..." if len(text) > 50 else f"New message: {text}"))
-    except Exception:
-        pass
+        """, (receiver_id, student_id, notif_text))
+    except Exception as e:
+        print("Error creating chat notification:", e)
 
     mysql.connection.commit()
     cur.close()
@@ -943,9 +1428,22 @@ def form_chat_send():
         try:
             cur.execute("INSERT IGNORE INTO participate (student_id, chat_id) VALUES (%s, %s)", (student_id, new_chat_id))
             cur.execute("INSERT IGNORE INTO participate (student_id, chat_id) VALUES (%s, %s)", (receiver_id, new_chat_id))
-            mysql.connection.commit()
         except Exception:
             pass
+
+        try:
+            sender_name = session.get('user_name') or 'A student'
+            msg_preview = f'"{text[:40]}..."' if (text and len(text) > 40) else (f'"{text}"' if text else 'Sent an attachment photo')
+            notif_text = f"💬 {sender_name} texted you: {msg_preview}"
+            cur.execute("""
+                INSERT INTO notification 
+                (buyer_notification, user_notification, text, notification_type, notification_status)
+                VALUES (%s, %s, %s, 'chat', 'unread')
+            """, (receiver_id, student_id, notif_text))
+        except Exception:
+            pass
+
+        mysql.connection.commit()
         cur.close()
 
     return redirect(url_for('chat_view', user=receiver_id))
