@@ -790,11 +790,18 @@
         <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
           <i class="ph ph-storefront"></i> Marketplace
         </a>
+        <a href="{{ url_for('wishlist_view') }}" class="btn btn-outline" style="text-decoration: none;">
+          <i class="ph ph-heart" style="color: #f43f5e;"></i> Wishlist
+          {% set cur_wishlist_count = (wishlist_count if wishlist_count is defined else global_wishlist_count) %}
+          {% if cur_wishlist_count and cur_wishlist_count > 0 %}
+          <span style="background: #f43f5e; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ cur_wishlist_count }}</span>
+          {% endif %}
+        </a>
         <a href="{{ url_for('chat_view') }}" class="btn btn-outline active">
           <i class="ph ph-chats-circle"></i> Messages
         </a>
         <a href="{{ url_for('cart_view') }}" class="cart-nav-badge">
-          <i class="ph ph-shopping-cart" style="color: #34d399; font-size: 16px;"></i> Cart: <span style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ cart_count or 0 }}</span>
+          <i class="ph ph-shopping-cart" style="color: #34d399; font-size: 16px;"></i> Cart: <span style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ global_cart_count or cart_count or 0 }}</span>
         </a>
         <a href="{{ url_for('sell_product') }}" class="btn btn-sell">
           <i class="ph ph-plus-circle"></i> Sell Item
@@ -895,8 +902,11 @@
           </div>
 
           <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('profile', student_id=active_peer.student_id) }}" class="btn btn-outline" style="font-size: 12px; padding: 7px 12px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">
+              <i class="ph-bold ph-user-circle"></i> View Profile
+            </a>
             <a href="{{ url_for('marketplace') }}" class="btn btn-outline" style="font-size: 12px; padding: 7px 12px;">
-              <i class="ph ph-storefront"></i> View Listings
+              <i class="ph ph-storefront"></i> Marketplace
             </a>
           </div>
         </div>

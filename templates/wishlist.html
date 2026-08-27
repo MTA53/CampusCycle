@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Academic Wishlist & Notifications - CampusCycle</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --bg-main: #0b1120;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(16, 185, 129, 0.4);
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --primary-light: #34d399;
+      --accent-cyan: #38bdf8;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-sub: #cbd5e1;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glows */
+    .ambient-glow {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.15;
+    }
+    .glow-1 { top: -100px; left: -100px; background: #10b981; }
+    .glow-2 { bottom: -100px; right: -100px; background: #38bdf8; }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .logo span { color: var(--primary-light); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Badges & Action Buttons */
+    .nav-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .nav-badge-btn:hover, .nav-badge-btn.active {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #ffffff;
+    }
+    .count-pill {
+      background: var(--primary);
+      color: white;
+      border-radius: 9999px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .count-pill-rose {
+      background: var(--accent-rose);
+      color: white;
+      border-radius: 9999px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid var(--card-border);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.12);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.25);
+    }
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.25);
+      color: #ffffff;
+      border-color: var(--accent-rose);
+    }
+
+    /* Container */
+    .wishlist-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 32px auto;
+      padding: 0 24px;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Section */
+    .page-header {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .header-info h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .header-info h1 i { color: var(--accent-rose); }
+    .header-info p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 650px;
+      line-height: 1.5;
+    }
+    .header-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 12px 18px;
+      border-radius: 14px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .stat-badge .num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      display: block;
+    }
+    .stat-badge .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Notifications Box */
+    .notif-section {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 36px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .notif-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .notif-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .notif-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .notif-item.unread {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .notif-text {
+      font-size: 14px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .notif-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .notif-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Section Titles */
+    .section-title-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Wishlist Grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+      margin-bottom: 48px;
+    }
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .product-card:hover {
+      border-color: var(--card-hover-border);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    .product-card.sold-card {
+      opacity: 0.75;
+      filter: grayscale(20%);
+    }
+
+    /* Card Image */
+    .card-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background: #1e293b;
+      overflow: hidden;
+    }
+    .card-img-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(to top, rgba(11, 17, 32, 0.85), transparent);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .product-card:hover .card-img {
+      transform: scale(1.05);
+    }
+    .card-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 42px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+    }
+    .card-img-placeholder span {
+      font-size: 13px;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* Badges on Card — Bottom of Image */
+    .badge-bottom {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2;
+    }
+    .badge-bottom-left {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      backdrop-filter: blur(8px);
+    }
+    .badge-course {
+      background: rgba(56, 189, 248, 0.25);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      vertical-align: middle;
+    }
+    .badge-sold {
+      background: rgba(244, 63, 94, 0.85);
+      color: #ffffff;
+    }
+    .badge-avail {
+      background: rgba(16, 185, 129, 0.85);
+      color: #ffffff;
+    }
+
+    /* Card Body */
+    .card-body {
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .card-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      text-decoration: none;
+      line-height: 1.35;
+      flex: 1;
+    }
+    .card-title:hover {
+      color: var(--primary-light);
+    }
+    .seller-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .seller-name {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-sub);
+    }
+    .trust-score {
+      color: var(--accent-amber);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* Price Box */
+    .price-box {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .current-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary-light);
+    }
+    .rec-price {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    /* Action Buttons */
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .card-actions-full {
+      grid-column: span 2;
+    }
+
+    /* Empty State */
+    .empty-state {
+      background: var(--card-bg);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 60px 24px;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--accent-rose);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px;
+    }
+    .empty-state h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .empty-state p {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    /* Course Recommendations Banner */
+    .rec-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 48px;
+      backdrop-filter: blur(12px);
+    }
+    .rec-banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .rec-banner-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .rec-banner-title i { color: var(--primary-light); }
+    .rec-badge-tag {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--primary-light);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--primary);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-radius: 14px;
+      padding: 16px 20px;
+      min-width: 320px;
+      max-width: 420px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: #ffffff;
+      pointer-events: auto;
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-icon {
+      font-size: 24px;
+      color: var(--primary-light);
+      flex-shrink: 0;
+    }
+    .toast-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .toast-content p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--card-border);
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      .page-header { padding: 24px; }
+      .header-info h1 { font-size: 22px; }
+      .product-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon">
+          <i class="ph-bold ph-arrows-clockwise"></i>
+        </div>
+        Campus<span>Cycle</span>
+      </a>
+      <div class="nav-actions">
+        <a href="{{ url_for('marketplace') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-storefront"></i>
+          <span>Marketplace</span>
+        </a>
+        <a href="{{ url_for('wishlist_view') }}" class="nav-badge-btn active">
+          <i class="ph-fill ph-heart"></i>
+          <span>Wishlist</span>
+          <span class="count-pill" id="navWishlistCount">{{ wishlist_count if wishlist_count is defined else global_wishlist_count }}</span>
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-shopping-cart"></i>
+          <span>Cart</span>
+          <span class="count-pill" id="navCartCount">{{ global_cart_count }}</span>
+        </a>
+        <a href="{{ url_for('chat_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-chat-teardrop-dots"></i>
+          <span>Chat</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-user-circle"></i>
+          <span>Profile</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="wishlist-container">
+
+    <!-- Header Section -->
+    <header class="page-header">
+      <div class="header-info">
+        <h1>
+          <i class="ph-fill ph-heart"></i>
+          Academic Wishlist & Live Alerts
+        </h1>
+        <p>
+          Save essential course materials, get intelligent recommendations for products used in the same courses (e.g. <strong>CSE260, PHY112</strong>), and receive instant notifications whenever a peer lists a matching item!
+        </p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-badge">
+          <span class="num" id="statWishlistTotal">{{ wishlist_items|length }}</span>
+          <span class="label">Saved Items</span>
+        </div>
+        <div class="stat-badge">
+          <span class="num">{{ wishlisted_courses|length }}</span>
+          <span class="label">Courses Tracked</span>
+        </div>
+        <div class="stat-badge">
+          <span class="num" id="statUnreadNotifs">{{ unread_notifs }}</span>
+          <span class="label">Stock Alerts</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Instant Stock & Match Notifications Panel -->
+    {% if notifications %}
+    <section class="notif-section">
+      <div class="notif-header">
+        <div class="notif-title">
+          <i class="ph-fill ph-bell-ringing"></i>
+          <span>Instant Match & Wishlist Notifications</span>
+          {% if unread_notifs > 0 %}
+          <span class="count-pill-rose">{{ unread_notifs }} new</span>
+          {% endif %}
+        </div>
+        {% if unread_notifs > 0 %}
+        <button class="btn btn-outline btn-sm" onclick="markAllNotificationsRead()">
+          <i class="ph-bold ph-check"></i> Mark all read
+        </button>
+        {% endif %}
+      </div>
+      <div class="notif-list">
+        {% for notif in notifications %}
+        <div class="notif-item {% if notif.notification_status == 'unread' %}unread{% endif %}" id="notif-{{ notif.n_id }}">
+          <div class="notif-text">
+            <div class="notif-icon">
+              <i class="ph-fill ph-lightning"></i>
+            </div>
+            <div>
+              <div>{{ notif.text }}</div>
+              <span class="notif-date">{{ notif.notification_date.strftime('%b %d, %I:%M %p') if notif.notification_date else 'Recently' }}</span>
+            </div>
+          </div>
+          {% if notif.notification_status == 'unread' %}
+          <button class="btn btn-outline btn-sm" onclick="markNotificationRead({{ notif.n_id }})" title="Mark as read">
+            <i class="ph-bold ph-check"></i>
+          </button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Wishlist Items Section -->
+    <div class="section-title-wrap">
+      <div>
+        <h2 class="section-title">
+          <i class="ph-bold ph-bookmark-simple" style="color: var(--primary-light);"></i>
+          Your Saved Academic Items
+        </h2>
+        <p class="section-subtitle">Items currently in your wishlist. We actively monitor the marketplace for discounts and new peer listings.</p>
+      </div>
+      <a href="{{ url_for('marketplace') }}" class="btn btn-outline btn-sm">
+        <i class="ph-bold ph-plus"></i> Browse More
+      </a>
+    </div>
+
+    {% if wishlist_items %}
+    <div class="product-grid" id="wishlistGrid">
+      {% for item in wishlist_items %}
+      <div class="product-card {% if item.sold_date %}sold-card{% endif %}" id="wishlist-item-{{ item.product_id }}">
+        
+        <!-- Image & Badges -->
+        <div class="card-img-wrap">
+          {% if item.photo %}
+          <img src="{{ item.photo }}" alt="{{ item.product_name }}" class="card-img">
+          {% else %}
+          <div class="card-img-placeholder">
+            <i class="ph-bold ph-package"></i>
+            <span>{{ item.category }}</span>
+          </div>
+          {% endif %}
+
+          <div class="badge-bottom">
+            <div class="badge-bottom-left">
+              {% if item.used_in_course %}
+              <span class="badge badge-course">
+                <i class="ph-fill ph-graduation-cap"></i> {{ item.used_in_course }}
+              </span>
+              {% endif %}
+            </div>
+            <div>
+              {% if item.sold_date %}
+              <span class="badge badge-sold"><i class="ph-fill ph-x-circle"></i> Sold</span>
+              {% else %}
+              <span class="badge badge-avail"><i class="ph-fill ph-check-circle"></i> Available</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body">
+          <div class="card-title-row">
+            <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="card-title">
+              {{ item.product_name }}
+            </a>
+            <span class="badge-inline">{{ item.category }}</span>
+          </div>
+
+          <div class="seller-row">
+            <span class="seller-name">
+              <i class="ph-bold ph-user"></i> {{ item.seller_name }}
+            </span>
+            <span class="trust-score">
+              <i class="ph-fill ph-star"></i> {{ item.seller_trust_score or 5.0 }}
+            </span>
+          </div>
+
+          <div class="price-box">
+            <span class="current-price">৳{{ "%.0f"|format(item.selling_price) }}</span>
+            {% if item.recommended_price and item.recommended_price > item.selling_price %}
+            <span class="rec-price">৳{{ "%.0f"|format(item.recommended_price) }}</span>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="card-actions">
+            {% if not item.sold_date %}
+            <form action="{{ url_for('add_to_cart_route', product_id=item.product_id) }}" method="POST" style="display: contents;">
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="ph-bold ph-shopping-cart-simple"></i> Buy
+              </button>
+            </form>
+            <a href="{{ url_for('chat_view') }}?user={{ item.seller_id }}&product_id={{ item.product_id }}" class="btn btn-outline btn-sm">
+              <i class="ph-bold ph-chat-teardrop"></i> Chat
+            </a>
+            {% else %}
+            <button class="btn btn-outline btn-sm card-actions-full" disabled style="opacity: 0.5;">
+              Item Sold Out
+            </button>
+            {% endif %}
+            <button class="btn btn-danger btn-sm card-actions-full" onclick="removeFromWishlist({{ item.product_id }}, '{{ item.product_name|escape }}')">
+              <i class="ph-bold ph-trash"></i> Remove from Wishlist
+            </button>
+          </div>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="ph-bold ph-heart-break"></i>
+      </div>
+      <h3>Your Wishlist is Empty</h3>
+      <p>Save textbooks, lab kits (e.g. CSE260 breadboards, multimeters), calculators, and bicycles to get instant alerts and course bundle recommendations!</p>
+      <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
+        <i class="ph-bold ph-storefront"></i> Explore Campus Marketplace
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Smart Course Recommendations Banner & Carousel -->
+    {% if recommendations %}
+    <section class="rec-banner">
+      <div class="rec-banner-header">
+        <div class="rec-banner-title">
+          <i class="ph-fill ph-sparkle"></i>
+          <span>Smart Course & Peer Recommendations</span>
+          <span class="rec-badge-tag">AI / Course Matched</span>
+        </div>
+        <span style="font-size: 13px; color: var(--text-muted);">
+          {% if wishlisted_courses %}
+          Suggested for your tracked courses: <strong>{{ wishlisted_courses|join(', ') }}</strong>
+          {% else %}
+          Popular essentials across BRACU courses
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="product-grid" style="margin-bottom: 0;">
+        {% for rec in recommendations %}
+        <div class="product-card" id="rec-card-{{ rec.product_id }}">
+          <div class="card-img-wrap">
+            {% if rec.photo %}
+            <img src="{{ rec.photo }}" alt="{{ rec.product_name }}" class="card-img">
+            {% else %}
+            <div class="card-img-placeholder">
+              <i class="ph-bold ph-device-mobile-speaker"></i>
+              <span>{{ rec.category }}</span>
+            </div>
+            {% endif %}
+
+            <div class="badge-top-left">
+              {% if rec.used_in_course %}
+              <span class="badge badge-course">
+                <i class="ph-fill ph-book-open"></i> {{ rec.used_in_course }}
+              </span>
+              {% endif %}
+              <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--primary-light); border: 1px solid rgba(16, 185, 129, 0.3);">
+                {{ rec.reason_type }} {{ rec.reason_value }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <a href="{{ url_for('product_detail', product_id=rec.product_id) }}" class="card-title">
+              {{ rec.product_name }}
+            </a>
+            <div class="seller-row">
+              <span class="seller-name">
+                <i class="ph-bold ph-user"></i> {{ rec.seller_name }}
+              </span>
+              <span class="trust-score">
+                <i class="ph-fill ph-star"></i> {{ rec.seller_trust_score or 5.0 }}
+              </span>
+            </div>
+
+            <div class="price-box">
+              <span class="current-price">৳{{ "%.0f"|format(rec.selling_price) }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-primary btn-sm card-actions-full" onclick="quickAddToWishlist({{ rec.product_id }}, '{{ rec.product_name|escape }}', '{{ rec.used_in_course|escape if rec.used_in_course else '' }}')">
+                <i class="ph-bold ph-heart"></i> + Add to Wishlist
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 CampusCycle &bull; BRAC University Peer-to-Peer Academic Ecosystem</p>
+  </footer>
+
+  <script>
+    // Show dynamic toast notification
+    function showToast(title, message, icon = 'ph-check-circle', isCourseAlert = false) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      if (isCourseAlert) {
+        toast.style.borderColor = 'var(--accent-cyan)';
+      }
+      toast.innerHTML = `
+        <div class="toast-icon">
+          <i class="ph-fill ${icon}" style="${isCourseAlert ? 'color: var(--accent-cyan);' : ''}"></i>
+        </div>
+        <div class="toast-content">
+          <h4>${title}</h4>
+          <p>${message}</p>
+        </div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 4500);
+    }
+
+    // Quick Add to Wishlist from Recommendations
+    async function quickAddToWishlist(productId, productName, courseCode) {
+      try {
+        const response = await fetch(`/wishlist/add/${productId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          showToast('Added to Wishlist!', `'${productName}' is now tracked in your wishlist.`, 'ph-heart-straight');
+          
+          if (courseCode) {
+            setTimeout(() => {
+              showToast(`Smart Match (${courseCode})`, `We'll instantly alert you when related ${courseCode} course materials get posted!`, 'ph-sparkle', true);
+            }, 800);
+          }
+
+          // Update counters
+          if (data.wishlist_count !== undefined) {
+            const navCount = document.getElementById('navWishlistCount');
+            const statTotal = document.getElementById('statWishlistTotal');
+            if (navCount) navCount.innerText = data.wishlist_count;
+            if (statTotal) statTotal.innerText = data.wishlist_count;
+          }
+
+          // Disable button or reload smoothly
+          const card = document.getElementById(`rec-card-${productId}`);
+          if (card) {
+            const btn = card.querySelector('button');
+            if (btn) {
+              btn.innerHTML = '<i class="ph-fill ph-check"></i> In Wishlist';
+              btn.disabled = true;
+              btn.style.opacity = '0.7';
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error adding to wishlist:', err);
+      }
+    }
+
+    // Remove from Wishlist
+    async function removeFromWishlist(productId, productName) {
+      if (!confirm(`Remove '${productName}' from your wishlist?`)) return;
+
+      try {
+        const response = await fetch(`/wishlist/remove/${productId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          const itemEl = document.getElementById(`wishlist-item-${productId}`);
+          if (itemEl) {
+            itemEl.style.transform = 'scale(0.9)';
+            itemEl.style.opacity = '0';
+            setTimeout(() => {
+              itemEl.remove();
+              const grid = document.getElementById('wishlistGrid');
+              if (grid && grid.children.length === 0) {
+                location.reload();
+              }
+            }, 250);
+          }
+
+          showToast('Removed from Wishlist', `'${productName}' was removed from your wishlist.`, 'ph-trash');
+
+          if (data.wishlist_count !== undefined) {
+            const navCount = document.getElementById('navWishlistCount');
+            const statTotal = document.getElementById('statWishlistTotal');
+            if (navCount) navCount.innerText = data.wishlist_count;
+            if (statTotal) statTotal.innerText = data.wishlist_count;
+          }
+        }
+      } catch (err) {
+        console.error('Error removing from wishlist:', err);
+      }
+    }
+
+    // Mark single notification read
+    async function markNotificationRead(notifId) {
+      try {
+        const response = await fetch(`/api/notifications/read/${notifId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          const el = document.getElementById(`notif-${notifId}`);
+          if (el) {
+            el.classList.remove('unread');
+            const btn = el.querySelector('button');
+            if (btn) btn.remove();
+          }
+          const unreadStat = document.getElementById('statUnreadNotifs');
+          if (unreadStat) unreadStat.innerText = data.unread_count || 0;
+        }
+      } catch (err) {
+        console.error('Error marking notification read:', err);
+      }
+    }
+
+    // Mark all notifications read
+    async function markAllNotificationsRead() {
+      try {
+        const response = await fetch('/api/notifications/read-all', {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          document.querySelectorAll('.notif-item.unread').forEach(el => {
+            el.classList.remove('unread');
+            const btn = el.querySelector('button');
+            if (btn) btn.remove();
+          });
+          const unreadStat = document.getElementById('statUnreadNotifs');
+          if (unreadStat) unreadStat.innerText = '0';
+          showToast('All Caught Up', 'All notifications marked as read.', 'ph-check-circle');
+        }
+      } catch (err) {
+        console.error('Error marking all notifications read:', err);
+      }
+    }
+  </script>
+</body>
+</html>

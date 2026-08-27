@@ -602,11 +602,18 @@
         <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
           <i class="ph ph-storefront"></i> Marketplace
         </a>
+        <a href="{{ url_for('wishlist_view') }}" class="btn btn-outline" style="text-decoration: none;">
+          <i class="ph ph-heart" style="color: #f43f5e;"></i> Wishlist
+          {% set cur_wishlist_count = (wishlist_count if wishlist_count is defined else global_wishlist_count) %}
+          {% if cur_wishlist_count and cur_wishlist_count > 0 %}
+          <span style="background: #f43f5e; color: white; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800;">{{ cur_wishlist_count }}</span>
+          {% endif %}
+        </a>
         <a href="{{ url_for('chat_view') }}" class="btn btn-outline">
           <i class="ph ph-chats-circle"></i> Messages
         </a>
         <a href="{{ url_for('cart_view') }}" class="cart-icon-nav" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.06); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; font-weight: 700; color: #cbd5e1; text-decoration: none;">
-          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ cart_count or 0 }}</span>
+          <i class="ph ph-shopping-cart" style="font-size: 18px; color: #34d399;"></i> Cart: <span id="navCartCount" style="background: #10b981; color: white; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 800;">{{ global_cart_count or cart_count or 0 }}</span>
         </a>
         {% if session.get('student_id') %}
           <a href="{{ url_for('profile') }}" class="btn btn-primary">
@@ -704,8 +711,8 @@
           </div>
         </div>
 
-        <!-- Action Buttons: Add to Cart & Chat -->
-        <div class="actions-grid">
+        <!-- Action Buttons: Add to Cart, Chat & Wishlist -->
+        <div class="actions-grid" style="grid-template-columns: 1fr 1fr;">
           <button type="button" class="btn btn-primary" id="addToCartBtn" onclick="addToCartAjax({{ product.product_id }})">
             <i class="ph ph-shopping-cart-simple"></i> Add to Cart
           </button>
@@ -713,17 +720,23 @@
           <a href="{{ url_for('chat_view', user=seller.student_id if seller else '', product_id=product.product_id) }}" class="btn btn-chat">
             <i class="ph ph-chats-circle"></i> Chat with Seller
           </a>
+          <button type="button" class="btn" id="addToWishlistBtn" onclick="addToWishlistAjax({{ product.product_id }})" style="grid-column: span 2; background: rgba(244, 63, 94, 0.12); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.3); font-weight: 700; padding: 12px; justify-content: center;">
+            <i class="ph-fill ph-heart"></i> Add to Wishlist & Track Course
+          </button>
         </div>
 
         <!-- Seller Profile Card -->
-        <div class="seller-card">
+        <a href="{{ url_for('profile', student_id=seller.student_id if seller else '') }}" class="seller-card" style="text-decoration: none; display: flex; transition: all 0.2s ease;" title="Click to view full seller profile">
           <div class="seller-info">
             <div class="seller-avatar">
               {{ seller.name[0]|upper if seller and seller.name else 'S' }}
             </div>
             <div>
-              <div class="seller-name">{{ seller.name if seller else 'BRACU Student Seller' }}</div>
-              <div class="seller-dept">{{ seller.department or 'BRACU' }} &bull; Semester {{ seller.semester or 'N/A' }}</div>
+              <div class="seller-name" style="display: flex; align-items: center; gap: 6px;">
+                {{ seller.name if seller else 'BRACU Student Seller' }}
+                <i class="ph-bold ph-arrow-square-out" style="font-size: 13px; color: #38bdf8;"></i>
+              </div>
+              <div class="seller-dept">{{ seller.department or 'BRACU' }} &bull; {% if seller.semester == 'Graduate' %}Graduate{% elif seller.semester %}Semester {{ seller.semester }}{% else %}N/A{% endif %}</div>
             </div>
           </div>
           <div class="seller-trust">
@@ -732,7 +745,7 @@
             </div>
             <div class="seller-trust-label">Trust Score</div>
           </div>
-        </div>
+        </a>
 
       </div>
 
@@ -877,6 +890,45 @@
       setTimeout(() => {
         toast.style.display = 'none';
       }, 3500);
+    }
+
+    // AJAX Add to Wishlist with Course match notice
+    function addToWishlistAjax(productId) {
+      fetch('/wishlist/add/' + productId, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (response.redirected) {
+          window.location.href = response.url;
+          return null;
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.success) {
+          const btn = document.getElementById('addToWishlistBtn');
+          if (btn) {
+            btn.innerHTML = '<i class="ph-fill ph-check"></i> In Your Wishlist';
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.color = '#34d399';
+            btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          }
+          if (data.course) {
+            showToast('ph-sparkle', '#38bdf8', 'Wishlist & Course Alert (' + data.course + ')', 'Item saved! We will alert you whenever matching ' + data.course + ' items are posted.');
+          } else {
+            showToast('ph-heart-fill', '#f43f5e', 'Added to Wishlist!', data.message);
+          }
+        } else if (data && data.message) {
+          showToast('ph-info', '#fbbf24', 'Wishlist', data.message);
+        }
+      })
+      .catch(err => {
+        console.error('Error adding to wishlist:', err);
+      });
     }
 
     function openChatNotice(sellerName) {
