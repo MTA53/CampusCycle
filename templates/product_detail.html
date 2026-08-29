@@ -577,14 +577,145 @@
       to { transform: translateY(0); opacity: 1; }
     }
 
-    /* Footer */
-    .footer {
+    /* Payment Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      overflow: hidden;
+      animation: scaleUp 0.25s ease;
+    }
+    @keyframes scaleUp {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.4);
+    }
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: #ffffff; }
+    .modal-body {
+      padding: 24px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .pay-methods-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .pay-method-opt {
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 12px;
+      padding: 10px 8px;
       text-align: center;
-      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .pay-method-opt:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+    .pay-method-opt.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+    }
+    .pay-method-opt.active.bkash {
+      border-color: #d82a68;
+      background: rgba(216, 42, 104, 0.15);
+    }
+    .pay-method-opt.active.nagad {
+      border-color: #f7941d;
+      background: rgba(247, 148, 29, 0.15);
+    }
+    .pay-method-opt.active.rocket {
+      border-color: #8c3494;
+      background: rgba(140, 52, 148, 0.15);
+    }
+    .pay-method-opt.active.card {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+    }
+    .pay-method-icon {
+      font-size: 20px;
+    }
+    .pay-method-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .pay-field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .pay-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-family: inherit;
       font-size: 13px;
-      color: #64748b;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      margin-top: auto;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .pay-input:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+    .btn-buy-now:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5) !important;
     }
   </style>
 </head>
@@ -711,8 +842,13 @@
           </div>
         </div>
 
-        <!-- Action Buttons: Add to Cart, Chat & Wishlist -->
-        <div class="actions-grid" style="grid-template-columns: 1fr 1fr;">
+        <!-- Action Buttons: Pay Now, Add to Cart, Chat & Wishlist -->
+        <div class="actions-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+          <!-- Primary Pay & Buy Now Button -->
+          <button type="button" class="btn btn-buy-now" id="buyNowBtn" onclick="openPaymentModal()" style="grid-column: span 2; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; font-weight: 800; padding: 14px; font-size: 15px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4); transition: all 0.2s ease;">
+            <i class="ph-bold ph-lightning" style="font-size: 18px; color: #fef08a;"></i> Pay & Buy Now (৳{{ product.selling_price }})
+          </button>
+          
           <button type="button" class="btn btn-primary" id="addToCartBtn" onclick="addToCartAjax({{ product.product_id }})">
             <i class="ph ph-shopping-cart-simple"></i> Add to Cart
           </button>
@@ -934,7 +1070,245 @@
     function openChatNotice(sellerName) {
       showToast('ph-chats-circle', '#a5b4fc', 'Chat with ' + sellerName, 'Opening peer chat window for this product listing.');
     }
+
+    // Payment & Buy Now Modal Logic
+    let currentSelectedMethod = 'bkash';
+
+    function openPaymentModal() {
+      document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    function setPaymentMethod(method, el) {
+      currentSelectedMethod = method;
+      document.getElementById('selectedPaymentMethodInput').value = method;
+      
+      document.querySelectorAll('.pay-method-opt').forEach(opt => {
+        opt.classList.remove('active', 'bkash', 'nagad', 'rocket', 'card');
+      });
+      el.classList.add('active', method);
+
+      // Hide all dynamic trays
+      document.getElementById('mfsTray').style.display = 'none';
+      document.getElementById('cardTray').style.display = 'none';
+      document.getElementById('cashTray').style.display = 'none';
+
+      const submitBtn = document.getElementById('paySubmitBtn');
+      const submitText = document.getElementById('paySubmitText');
+
+      if (method === 'bkash') {
+        document.getElementById('mfsTray').style.display = 'block';
+        document.getElementById('mfsTitle').innerText = 'bKash Mobile Payment';
+        document.getElementById('mfsHelp').innerText = 'Send Money / Payment to Merchant/Personal No: 01700000000';
+        document.getElementById('mfsPhoneLabel').innerText = 'bKash Account Number';
+        document.getElementById('mfsPhoneInput').placeholder = '017XXXXXXXX';
+        submitBtn.style.background = 'linear-gradient(135deg, #d82a68, #be185d)';
+        submitText.innerText = 'Confirm & Pay ৳{{ product.selling_price }} with bKash';
+        generateSimulatedTrx('BK');
+      } else if (method === 'nagad') {
+        document.getElementById('mfsTray').style.display = 'block';
+        document.getElementById('mfsTitle').innerText = 'Nagad Digital Wallet';
+        document.getElementById('mfsHelp').innerText = 'Send payment to Nagad No: 01800000000';
+        document.getElementById('mfsPhoneLabel').innerText = 'Nagad Account Number';
+        document.getElementById('mfsPhoneInput').placeholder = '018XXXXXXXX';
+        submitBtn.style.background = 'linear-gradient(135deg, #f7941d, #d97706)';
+        submitText.innerText = 'Confirm & Pay ৳{{ product.selling_price }} with Nagad';
+        generateSimulatedTrx('NG');
+      } else if (method === 'rocket') {
+        document.getElementById('mfsTray').style.display = 'block';
+        document.getElementById('mfsTitle').innerText = 'Dutch-Bangla Rocket';
+        document.getElementById('mfsHelp').innerText = 'Send payment to Rocket No: 019000000009';
+        document.getElementById('mfsPhoneLabel').innerText = 'Rocket Account Number (12 digits)';
+        document.getElementById('mfsPhoneInput').placeholder = '019XXXXXXXXX';
+        submitBtn.style.background = 'linear-gradient(135deg, #8c3494, #6b21a8)';
+        submitText.innerText = 'Confirm & Pay ৳{{ product.selling_price }} with Rocket';
+        generateSimulatedTrx('RK');
+      } else if (method === 'card') {
+        document.getElementById('cardTray').style.display = 'block';
+        submitBtn.style.background = 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+        submitText.innerText = 'Pay ৳{{ product.selling_price }} via Card';
+      } else if (method === 'cash_on_meetup') {
+        document.getElementById('cashTray').style.display = 'block';
+        submitBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        submitText.innerText = 'Place Order (Pay Cash on Handover)';
+      }
+    }
+
+    function generateSimulatedTrx(prefix) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = prefix;
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const trxInput = document.getElementById('trxIdInput');
+      if (trxInput) trxInput.value = result;
+    }
+
+    function handleBuyNowForm(e) {
+      e.preventDefault();
+      const form = document.getElementById('buyNowForm');
+      const formData = new FormData(form);
+      const submitBtn = document.getElementById('paySubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Processing Payment...';
+
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast('ph-check-circle', '#34d399', 'Payment Successful!', data.message);
+          setTimeout(() => {
+            window.location.href = data.redirect || '/profile';
+          }, 1200);
+        } else {
+          showToast('ph-warning-circle', '#f43f5e', 'Order Error', data.message || 'Payment failed.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="ph-bold ph-shield-check"></i> <span id="paySubmitText">Try Again</span>';
+        }
+      })
+      .catch(err => {
+        console.error('Error submitting order:', err);
+        form.submit();
+      });
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePaymentModal();
+    });
   </script>
+
+  <!-- Payment Modal Structure -->
+  <div id="paymentModal" class="modal-overlay" onclick="if(event.target===this) closePaymentModal();">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="ph-bold ph-credit-card" style="color: #34d399;"></i> Campus Payment & Checkout</h3>
+        <button type="button" class="modal-close" onclick="closePaymentModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Product Summary snippet -->
+        <div style="display: flex; gap: 14px; background: rgba(30, 41, 59, 0.6); padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px; align-items: center;">
+          <img src="{{ photos[0] if photos else 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200' }}" alt="{{ product.product_name }}" style="width: 54px; height: 54px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="flex: 1;">
+            <div style="font-weight: 700; font-size: 14px; color: #ffffff; margin-bottom: 2px;">{{ product.product_name }}</div>
+            <div style="font-size: 12px; color: #94a3b8;"><i class="ph ph-user"></i> Seller: {{ seller.name if seller else 'Peer' }}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Payable</div>
+            <div style="font-size: 18px; font-weight: 800; color: #34d399;">৳{{ product.selling_price }}</div>
+          </div>
+        </div>
+
+        <form id="buyNowForm" action="{{ url_for('buy_now', product_id=product.product_id) }}" method="POST" onsubmit="handleBuyNowForm(event)">
+          <input type="hidden" name="payment_method" id="selectedPaymentMethodInput" value="bkash">
+
+          <!-- Handover location -->
+          <div style="margin-bottom: 16px;">
+            <label class="pay-field-label"><i class="ph ph-map-pin"></i> BRACU Campus Handover Point</label>
+            <select name="delivery_place" class="pay-input">
+              <option value="UB Gate / Building Lobby">UB Gate / Building Lobby</option>
+              <option value="Library Gate / 3rd Floor">Library Gate / 3rd Floor</option>
+              <option value="Cafeteria (UB-02)">Cafeteria (UB-02)</option>
+              <option value="Prangon / Courtyard">Prangon / Courtyard</option>
+              <option value="Khaas Food Court Area">Khaas Food Court Area</option>
+            </select>
+          </div>
+
+          <!-- Payment Method Choice -->
+          <label class="pay-field-label"><i class="ph ph-wallet"></i> Select Payment Method</label>
+          <div class="pay-methods-grid">
+            <div class="pay-method-opt active bkash" onclick="setPaymentMethod('bkash', this)">
+              <div class="pay-method-icon" style="color: #d82a68;"><i class="ph-bold ph-device-mobile"></i></div>
+              <div class="pay-method-name">bKash</div>
+            </div>
+            <div class="pay-method-opt" onclick="setPaymentMethod('nagad', this)">
+              <div class="pay-method-icon" style="color: #f7941d;"><i class="ph-bold ph-lightning"></i></div>
+              <div class="pay-method-name">Nagad</div>
+            </div>
+            <div class="pay-method-opt" onclick="setPaymentMethod('rocket', this)">
+              <div class="pay-method-icon" style="color: #8c3494;"><i class="ph-bold ph-rocket-launch"></i></div>
+              <div class="pay-method-name">Rocket</div>
+            </div>
+            <div class="pay-method-opt" onclick="setPaymentMethod('card', this)">
+              <div class="pay-method-icon" style="color: #3b82f6;"><i class="ph-bold ph-credit-card"></i></div>
+              <div class="pay-method-name">Card</div>
+            </div>
+            <div class="pay-method-opt" onclick="setPaymentMethod('cash_on_meetup', this)" style="grid-column: span 2;">
+              <div class="pay-method-icon" style="color: #10b981;"><i class="ph-bold ph-handshake"></i></div>
+              <div class="pay-method-name">Cash on Meetup (Handover)</div>
+            </div>
+          </div>
+
+          <!-- MFS (bKash, Nagad, Rocket) Form Tray -->
+          <div id="mfsTray" style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span id="mfsTitle" style="font-weight: 700; font-size: 13px; color: #ffffff;">bKash Mobile Payment</span>
+              <span style="font-size: 11px; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Instant Digital Verification</span>
+            </div>
+            <p id="mfsHelp" style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Send Money / Payment to Merchant/Personal No: 01700000000</p>
+            
+            <label class="pay-field-label" id="mfsPhoneLabel">bKash Account Number</label>
+            <input type="text" name="account_number" id="mfsPhoneInput" class="pay-input" placeholder="017XXXXXXXX" value="01712345678">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="pay-field-label" style="margin-bottom: 0;">Transaction ID (TrxID)</label>
+              <button type="button" onclick="generateSimulatedTrx(currentSelectedMethod==='nagad'?'NG':(currentSelectedMethod==='rocket'?'RK':'BK'))" style="background: transparent; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; text-decoration: underline;">Auto-generate TrxID</button>
+            </div>
+            <input type="text" name="trx_id" id="trxIdInput" class="pay-input" placeholder="e.g. BK892XFA7" value="BK79A2149">
+          </div>
+
+          <!-- Card Form Tray -->
+          <div id="cardTray" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: 700; font-size: 13px; color: #ffffff;">Visa / Mastercard Payment</span>
+              <div style="display: flex; gap: 6px; font-size: 16px; color: #60a5fa;"><i class="ph-bold ph-credit-card"></i> <i class="ph-bold ph-shield-check"></i></div>
+            </div>
+            <label class="pay-field-label">Cardholder Name</label>
+            <input type="text" class="pay-input" placeholder="Cardholder Name" value="BRACU STUDENT">
+            <label class="pay-field-label">Card Number</label>
+            <input type="text" class="pay-input" placeholder="4242 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4242" value="4242 8899 1234 5678">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label class="pay-field-label">Expiry (MM/YY)</label>
+                <input type="text" class="pay-input" placeholder="12/28" value="12/28">
+              </div>
+              <div>
+                <label class="pay-field-label">CVV / CVC</label>
+                <input type="password" class="pay-input" placeholder="123" value="888">
+              </div>
+            </div>
+          </div>
+
+          <!-- Cash on Meetup Tray -->
+          <div id="cashTray" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #34d399; font-weight: 700; font-size: 13px; margin-bottom: 6px;">
+              <i class="ph-bold ph-shield-check"></i> On-Campus Cash Handover
+            </div>
+            <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5; margin: 0;">
+              You can meet the seller in person at the designated BRAC University spot and hand over cash upon inspecting the item.
+            </p>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="paySubmitBtn" style="width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #d82a68, #be185d); color: #ffffff; font-weight: 800; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); transition: all 0.2s ease;">
+            <i class="ph-bold ph-shield-check"></i>
+            <span id="paySubmitText">Confirm & Pay ৳{{ product.selling_price }} with bKash</span>
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

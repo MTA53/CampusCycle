@@ -516,6 +516,79 @@
       border: 1px solid rgba(59, 130, 246, 0.3);
     }
 
+    /* Payment Badges & Action Buttons */
+    .pay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-bkash {
+      background: rgba(216, 42, 104, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(216, 42, 104, 0.3);
+    }
+    .badge-nagad {
+      background: rgba(247, 148, 29, 0.15);
+      color: #fb923c;
+      border: 1px solid rgba(247, 148, 29, 0.3);
+    }
+    .badge-rocket {
+      background: rgba(140, 52, 148, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(140, 52, 148, 0.3);
+    }
+    .badge-card {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .badge-cash {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .btn-receipt-action {
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-receipt-action:hover {
+      background: rgba(56, 189, 248, 0.25);
+      color: #ffffff;
+    }
+    .btn-pay-action {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-pay-action:hover {
+      background: #10b981;
+      color: #ffffff;
+    }
+
     /* Empty state */
     .empty-state {
       text-align: center;
@@ -764,9 +837,12 @@
         </div>
       </div>
 
-      <!-- Action Buttons: Chat, Sell Product, Browse Marketplace -->
+      <!-- Action Buttons: Chat, Sell Product, Browse Marketplace, Pay Online -->
       <div class="profile-actions">
         {% if is_own_profile %}
+          <button type="button" class="btn" onclick="openQuickPayModal()" style="background: linear-gradient(135deg, #d82a68, #be185d); color: #ffffff; box-shadow: 0 4px 16px rgba(216, 42, 104, 0.4); border: none; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 10px; font-size: 13.5px; transition: transform 0.2s;">
+            <i class="ph-bold ph-credit-card"></i> Pay Online (bKash/Nagad)
+          </button>
           <a href="{{ url_for('chat_view') }}" class="btn btn-chat" id="chatBtn">
             <i class="ph ph-chats-circle"></i> Chat / Messages
           </a>
@@ -786,6 +862,40 @@
         {% endif %}
       </div>
     </div>
+
+    <!-- Pending Orders Payment Alert Banner -->
+    {% if is_own_profile and purchases and purchases|length > 0 %}
+      {% set pending_item = purchases[0] %}
+      <div style="background: linear-gradient(135deg, rgba(216, 42, 104, 0.15), rgba(247, 148, 29, 0.12)); border: 1.5px solid rgba(216, 42, 104, 0.35); border-radius: 16px; padding: 18px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #d82a68, #f7941d); display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; box-shadow: 0 4px 14px rgba(216, 42, 104, 0.4);">
+            <i class="ph-bold ph-credit-card"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 800; color: #ffffff; margin: 0 0 4px;">
+              {% if pending_item.payment_method in ['bkash', 'nagad', 'rocket', 'card'] or pending_item.confirmation %}
+                Order #ORD-{{ pending_item.order_id }} is Paid & Confirmed
+              {% else %}
+                Pending Payment for Order #ORD-{{ pending_item.order_id }}
+              {% endif %}
+            </h3>
+            <p style="font-size: 13px; color: #cbd5e1; margin: 0;">
+              Item: <strong>{{ pending_item.product_name or 'BRACU Academic Item' }}</strong> &bull; Bill: <strong style="color: #34d399;">৳{{ pending_item.final_bill }}</strong> &bull; Method: <strong>{{ (pending_item.payment_method or 'Cash on Meetup')|replace('_', ' ')|title }}</strong>
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          {% if (pending_item.payment_method == 'cash_on_meetup' or not pending_item.payment_method) and not pending_item.confirmation %}
+            <button type="button" onclick="openPayOrderModal({{ pending_item.order_id }}, '{{ pending_item.product_name or "Order #" ~ pending_item.order_id }}', {{ pending_item.final_bill or 0 }})" style="background: linear-gradient(135deg, #d82a68, #be185d); color: #ffffff; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(216, 42, 104, 0.4);">
+              <i class="ph-bold ph-lightning"></i> Pay ৳{{ pending_item.final_bill }} via bKash / Nagad
+            </button>
+          {% endif %}
+          <button type="button" onclick="viewDigitalReceipt({{ pending_item.order_id }})" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <i class="ph-bold ph-receipt"></i> View Receipt
+          </button>
+        </div>
+      </div>
+    {% endif %}
 
     <!-- 2-Column Dashboard Grid: Personal Details & Derived Trust Score -->
     <div class="dashboard-grid">
@@ -945,6 +1055,78 @@
               <tbody>
                 {% for item in purchases %}
                   <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #38bdf8;">#ORD-{{ item.order_id }}</div>
+                      <div style="font-size: 11px; color: #64748b;">{{ item.delivery_date or 'Recent' }}</div>
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        {% if item.photo %}
+                          <img src="{{ item.photo }}" alt="{{ item.product_name }}" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);">
+                        {% else %}
+                          <div style="width: 38px; height: 38px; border-radius: 8px; background: #1e293b; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 16px;">
+                            <i class="ph ph-package"></i>
+                          </div>
+                        {% endif %}
+                        <div>
+                          {% if item.product_id %}
+                            <a href="{{ url_for('product_detail', product_id=item.product_id) }}" style="font-weight: 700; color: #ffffff; text-decoration: none; display: block; font-size: 13.5px;">
+                              {{ item.product_name or 'BRACU Item' }}
+                            </a>
+                          {% else %}
+                            <span style="font-weight: 700; color: #ffffff; font-size: 13.5px;">{{ item.product_name or 'Cart Item / Product' }}</span>
+                          {% endif %}
+                          <div style="font-size: 11px; color: #94a3b8;">{{ item.category or 'Academic' }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span style="font-weight: 600; color: #cbd5e1; font-size: 13px;"><i class="ph ph-user"></i> {{ item.seller_name or 'Peer' }}</span>
+                    </td>
+                    <td>
+                      <span style="font-size: 15px; font-weight: 800; color: #34d399;">৳{{ item.final_bill }}</span>
+                    </td>
+                    <td>
+                      {% if item.payment_method == 'bkash' %}
+                        <span class="pay-badge badge-bkash"><i class="ph-bold ph-device-mobile"></i> bKash</span>
+                      {% elif item.payment_method == 'nagad' %}
+                        <span class="pay-badge badge-nagad"><i class="ph-bold ph-lightning"></i> Nagad</span>
+                      {% elif item.payment_method == 'rocket' %}
+                        <span class="pay-badge badge-rocket"><i class="ph-bold ph-rocket-launch"></i> Rocket</span>
+                      {% elif item.payment_method == 'card' %}
+                        <span class="pay-badge badge-card"><i class="ph-bold ph-credit-card"></i> Card</span>
+                      {% else %}
+                        <span class="pay-badge badge-cash"><i class="ph-bold ph-handshake"></i> Cash Meetup</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span style="font-size: 12px; color: #94a3b8;"><i class="ph ph-map-pin" style="color: #38bdf8;"></i> {{ item.delivery_place or 'UB Gate' }}</span>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
+                        {% if item.payment_method in ['bkash', 'nagad', 'rocket', 'card'] or item.delivery_status == 'confirmed' or item.confirmation %}
+                          <span class="status-badge status-completed">
+                            <i class="ph-fill ph-check-circle"></i> Paid & Confirmed
+                          </span>
+                        {% else %}
+                          <span class="status-badge status-pending">
+                            <i class="ph-fill ph-clock"></i> Pending Handover
+                          </span>
+                        {% endif %}
+
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
+                          <button type="button" class="btn-receipt-action" onclick="viewDigitalReceipt({{ item.order_id }})">
+                            <i class="ph-bold ph-receipt"></i> Receipt
+                          </button>
+                          {% if (item.payment_method == 'cash_on_meetup' or not item.payment_method) and not item.confirmation %}
+                            <button type="button" class="btn-pay-action" onclick="openPayOrderModal({{ item.order_id }}, '{{ item.product_name or "Order #" ~ item.order_id }}', {{ item.final_bill or 0 }})">
+                              <i class="ph-bold ph-credit-card"></i> Pay Online
+                            </button>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -1355,7 +1537,310 @@
         }
       } catch (e) {}
     }, 15000);
+
+    // ==========================================
+    // DIGITAL RECEIPT & ORDER PAYMENT MODALS
+    // ==========================================
+    async function viewDigitalReceipt(orderId) {
+      try {
+        const res = await fetch(`/api/order/${orderId}/receipt`);
+        const data = await res.json();
+        if (data && data.success && data.receipt) {
+          const rec = data.receipt;
+          document.getElementById('recNumber').innerText = rec.receipt_no || `CC-REC-${orderId}`;
+          document.getElementById('recOrderId').innerText = `#ORD-${rec.order_id || orderId}`;
+          document.getElementById('recTrxId').innerText = rec.trx_id || 'N/A';
+          document.getElementById('recMethod').innerText = rec.payment_method || 'Cash on Handover';
+          document.getElementById('recAccount').innerText = rec.account_number || 'Campus Meetup';
+          document.getElementById('recAmount').innerText = `৳${rec.amount || '0.00'}`;
+          document.getElementById('recDate').innerText = rec.issued_at || new Date().toLocaleString();
+          document.getElementById('recLocation').innerText = rec.delivery_place || 'UB Gate / Campus';
+          
+          const statusBadge = document.getElementById('recStatusBadge');
+          if (rec.is_paid || rec.payment_status === 'PAID (Verified)') {
+            statusBadge.className = 'status-badge status-completed';
+            statusBadge.innerHTML = '<i class="ph-fill ph-seal-check"></i> VERIFIED & PAID';
+          } else {
+            statusBadge.className = 'status-badge status-pending';
+            statusBadge.innerHTML = '<i class="ph-fill ph-clock"></i> PENDING CASH HANDOVER';
+          }
+
+          const itemsContainer = document.getElementById('recItemsList');
+          if (rec.items && rec.items.length > 0) {
+            itemsContainer.innerHTML = rec.items.map(item => `
+              <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                <span style="color: #ffffff; font-weight: 600;">${item.product_name || 'Item'}</span>
+                <span style="color: #34d399; font-weight: 700;">৳${item.price || '0.00'}</span>
+              </div>
+            `).join('');
+          } else {
+            itemsContainer.innerHTML = '<div style="font-size: 12px; color: #94a3b8;">Order products included</div>';
+          }
+
+          document.getElementById('receiptModalBackdrop').style.display = 'flex';
+        }
+      } catch (err) {
+        console.error('Failed to load receipt:', err);
+      }
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receiptModalBackdrop').style.display = 'none';
+    }
+
+    let activePayOrderId = null;
+    let selectedPayOrderMethod = 'bkash';
+
+    function openQuickPayModal() {
+      {% if purchases and purchases|length > 0 %}
+        openPayOrderModal({{ purchases[0].order_id }}, '{{ purchases[0].product_name or "Order #" ~ purchases[0].order_id }}', {{ purchases[0].final_bill or 0 }});
+      {% else %}
+        window.location.href = '/marketplace';
+      {% endif %}
+    }
+
+    function openPayOrderModal(orderId, orderTitle, amount) {
+      activePayOrderId = orderId;
+      document.getElementById('payOrderTitle').innerText = orderTitle;
+      document.getElementById('payOrderAmount').innerText = `৳${amount}`;
+      document.getElementById('payOrderForm').action = `/pay-order/${orderId}`;
+      document.getElementById('payOrderSubmitText').innerText = `Confirm & Pay ৳${amount} via bKash`;
+      setPayOrderMethod('bkash');
+      document.getElementById('payOrderModalBackdrop').style.display = 'flex';
+    }
+
+    function closePayOrderModal() {
+      document.getElementById('payOrderModalBackdrop').style.display = 'none';
+    }
+
+    function setPayOrderMethod(method, el) {
+      selectedPayOrderMethod = method;
+      document.getElementById('payOrderMethodInput').value = method;
+      
+      document.querySelectorAll('.modal-pay-opt').forEach(opt => {
+        opt.classList.remove('active', 'bkash', 'nagad', 'rocket', 'card');
+      });
+      if (el) {
+        el.classList.add('active', method);
+      } else {
+        const firstOpt = document.querySelector(`.modal-pay-opt.${method}`) || document.querySelector('.modal-pay-opt');
+        if (firstOpt) firstOpt.classList.add('active', method);
+      }
+
+      const mfsTray = document.getElementById('payOrderMfsTray');
+      const cardTray = document.getElementById('payOrderCardTray');
+      const btn = document.getElementById('payOrderSubmitBtn');
+      const text = document.getElementById('payOrderSubmitText');
+      const amt = document.getElementById('payOrderAmount').innerText;
+
+      mfsTray.style.display = 'none';
+      cardTray.style.display = 'none';
+
+      if (method === 'bkash') {
+        mfsTray.style.display = 'block';
+        document.getElementById('payOrderMfsTitle').innerText = 'bKash Payment';
+        document.getElementById('payOrderMfsPhoneLabel').innerText = 'bKash Account Number';
+        btn.style.background = 'linear-gradient(135deg, #d82a68, #be185d)';
+        text.innerText = `Confirm & Pay ${amt} via bKash`;
+        generatePayOrderTrx('BK');
+      } else if (method === 'nagad') {
+        mfsTray.style.display = 'block';
+        document.getElementById('payOrderMfsTitle').innerText = 'Nagad Payment';
+        document.getElementById('payOrderMfsPhoneLabel').innerText = 'Nagad Account Number';
+        btn.style.background = 'linear-gradient(135deg, #f7941d, #d97706)';
+        text.innerText = `Confirm & Pay ${amt} via Nagad`;
+        generatePayOrderTrx('NG');
+      } else if (method === 'rocket') {
+        mfsTray.style.display = 'block';
+        document.getElementById('payOrderMfsTitle').innerText = 'Rocket Payment';
+        document.getElementById('payOrderMfsPhoneLabel').innerText = 'Rocket Account Number';
+        btn.style.background = 'linear-gradient(135deg, #8c3494, #6b21a8)';
+        text.innerText = `Confirm & Pay ${amt} via Rocket`;
+        generatePayOrderTrx('RK');
+      } else if (method === 'card') {
+        cardTray.style.display = 'block';
+        btn.style.background = 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+        text.innerText = `Pay ${amt} via Card`;
+      }
+    }
+
+    function generatePayOrderTrx(prefix) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = prefix;
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const trx = document.getElementById('payOrderTrxInput');
+      if (trx) trx.value = result;
+    }
+
+    async function handlePayOrderSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('payOrderForm');
+      const formData = new FormData(form);
+      const btn = document.getElementById('payOrderSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Processing Payment...';
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.message || 'Payment failed.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ph-bold ph-shield-check"></i> Try Again';
+        }
+      } catch (err) {
+        form.submit();
+      }
+    }
   </script>
+
+  <!-- Digital Receipt Modal -->
+  <div id="receiptModalBackdrop" class="modal-backdrop" onclick="if(event.target===this) closeReceiptModal();">
+    <div class="modal-card" style="max-width: 480px; padding: 0; overflow: hidden; background: #0f172a; border: 1px solid rgba(255,255,255,0.15);">
+      <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 20px;">
+            <i class="ph-bold ph-receipt"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 800; color: #ffffff; margin: 0;">CampusCycle Digital Receipt</h3>
+            <span id="recNumber" style="font-size: 11px; color: #94a3b8; font-family: monospace;">CC-REC-00001</span>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeReceiptModal()">&times;</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <div>
+            <span style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700; display: block;">Total Paid</span>
+            <span id="recAmount" style="font-size: 24px; font-weight: 800; color: #34d399;">৳0.00</span>
+          </div>
+          <span id="recStatusBadge" class="status-badge status-completed">VERIFIED</span>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Order Details</div>
+          <div id="recItemsList" style="background: rgba(30, 41, 59, 0.5); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 12.5px;">
+          <div style="background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Order ID</span>
+            <span id="recOrderId" style="font-weight: 700; color: #ffffff;">#ORD-1</span>
+          </div>
+          <div style="background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Transaction ID</span>
+            <span id="recTrxId" style="font-weight: 700; color: #38bdf8; font-family: monospace;">TX-001</span>
+          </div>
+          <div style="background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Payment Method</span>
+            <span id="recMethod" style="font-weight: 700; color: #ffffff;">bKash</span>
+          </div>
+          <div style="background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Account</span>
+            <span id="recAccount" style="font-weight: 700; color: #ffffff;">017****5678</span>
+          </div>
+          <div style="grid-column: span 2; background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Campus Handover Point</span>
+            <span id="recLocation" style="font-weight: 700; color: #ffffff;"><i class="ph ph-map-pin" style="color: #34d399;"></i> UB Gate / Building Lobby</span>
+          </div>
+          <div style="grid-column: span 2; background: rgba(30, 41, 59, 0.4); padding: 10px 12px; border-radius: 8px;">
+            <span style="font-size: 10.5px; color: #94a3b8; display: block; font-weight: 700;">Issued On</span>
+            <span id="recDate" style="font-weight: 600; color: #cbd5e1;">-</span>
+          </div>
+        </div>
+
+        <button type="button" onclick="window.print()" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #ffffff; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="ph-bold ph-printer"></i> Print / Save Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pay Pending Order Modal -->
+  <div id="payOrderModalBackdrop" class="modal-backdrop" onclick="if(event.target===this) closePayOrderModal();">
+    <div class="modal-card" style="max-width: 500px; padding: 24px; background: #0f172a; border: 1px solid rgba(255,255,255,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <h3 style="font-size: 17px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i class="ph-bold ph-credit-card" style="color: #34d399;"></i> Pay Order Online
+        </h3>
+        <button type="button" class="btn-close-modal" onclick="closePayOrderModal()">&times;</button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.6); padding: 12px 14px; border-radius: 10px; margin-bottom: 16px;">
+        <span id="payOrderTitle" style="font-weight: 700; font-size: 13.5px; color: #ffffff;">Order</span>
+        <span id="payOrderAmount" style="font-size: 18px; font-weight: 800; color: #34d399;">৳0.00</span>
+      </div>
+
+      <form id="payOrderForm" method="POST" onsubmit="handlePayOrderSubmit(event)">
+        <input type="hidden" name="payment_method" id="payOrderMethodInput" value="bkash">
+
+        <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">Select Payment Channel</label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px;">
+          <div class="pay-method-opt modal-pay-opt active bkash" onclick="setPayOrderMethod('bkash', this)">
+            <div class="pay-method-icon" style="color: #d82a68;"><i class="ph-bold ph-device-mobile"></i></div>
+            <div class="pay-method-name">bKash</div>
+          </div>
+          <div class="pay-method-opt modal-pay-opt" onclick="setPayOrderMethod('nagad', this)">
+            <div class="pay-method-icon" style="color: #f7941d;"><i class="ph-bold ph-lightning"></i></div>
+            <div class="pay-method-name">Nagad</div>
+          </div>
+          <div class="pay-method-opt modal-pay-opt" onclick="setPayOrderMethod('rocket', this)">
+            <div class="pay-method-icon" style="color: #8c3494;"><i class="ph-bold ph-rocket-launch"></i></div>
+            <div class="pay-method-name">Rocket</div>
+          </div>
+          <div class="pay-method-opt modal-pay-opt" onclick="setPayOrderMethod('card', this)">
+            <div class="pay-method-icon" style="color: #3b82f6;"><i class="ph-bold ph-credit-card"></i></div>
+            <div class="pay-method-name">Card</div>
+          </div>
+        </div>
+
+        <!-- MFS Tray -->
+        <div id="payOrderMfsTray" style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+          <div id="payOrderMfsTitle" style="font-weight: 700; font-size: 12.5px; color: #ffffff; margin-bottom: 8px;">bKash Payment</div>
+          <label class="pay-field-label" id="payOrderMfsPhoneLabel">Account Number</label>
+          <input type="text" name="account_number" class="pay-input" placeholder="017XXXXXXXX" value="01712345678">
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="pay-field-label" style="margin: 0;">Transaction ID (TrxID)</label>
+            <button type="button" onclick="generatePayOrderTrx(selectedPayOrderMethod==='nagad'?'NG':(selectedPayOrderMethod==='rocket'?'RK':'BK'))" style="background: transparent; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; text-decoration: underline;">Auto TrxID</button>
+          </div>
+          <input type="text" name="trx_id" id="payOrderTrxInput" class="pay-input" placeholder="TrxID" value="BK882199">
+        </div>
+
+        <!-- Card Tray -->
+        <div id="payOrderCardTray" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(59, 130, 246, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+          <label class="pay-field-label">Card Number</label>
+          <input type="text" class="pay-input" placeholder="4242 8899 1234 5678" value="4242 8899 1234 5678">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label class="pay-field-label">Expiry</label>
+              <input type="text" class="pay-input" placeholder="12/28" value="12/28">
+            </div>
+            <div>
+              <label class="pay-field-label">CVV</label>
+              <input type="password" class="pay-input" placeholder="123" value="888">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="payOrderSubmitBtn" style="width: 100%; padding: 14px; border-radius: 10px; border: none; background: linear-gradient(135deg, #d82a68, #be185d); color: #ffffff; font-weight: 800; font-size: 14.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="ph-bold ph-shield-check"></i>
+          <span id="payOrderSubmitText">Confirm & Pay</span>
+        </button>
+      </form>
+    </div>
+  </div>
 
 </body>
 </html>

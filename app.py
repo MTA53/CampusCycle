@@ -5,6 +5,8 @@ from werkzeug.utils import secure_filename
 from datetime import date, datetime
 import os
 import random
+import json
+import string
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'campuscycle_secret_key_bracu_2026')
@@ -21,6 +23,57 @@ app.config['MYSQL_DB'] = 'campuscycle'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
+
+
+def create_digital_receipt(order_id, buyer_id, buyer_name, amount, payment_method, account_number, trx_id, delivery_place, items):
+    """Generates a structured JSON digital receipt for an order."""
+    if not trx_id:
+        prefix_map = {
+            'bkash': 'BK',
+            'nagad': 'NG',
+            'rocket': 'RK',
+            'card': 'CD',
+            'cash_on_meetup': 'CSH'
+        }
+        prefix = prefix_map.get(payment_method, 'TX')
+        random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        trx_id = f"{prefix}{random_suffix}"
+
+    method_labels = {
+        'bkash': 'bKash Mobile Payment',
+        'nagad': 'Nagad Digital Wallet',
+        'rocket': 'Dutch-Bangla Rocket',
+        'card': 'Credit / Debit Card (Online)',
+        'cash_on_meetup': 'Cash on Campus Handover'
+    }
+
+    masked_acc = account_number
+    if account_number and len(account_number) >= 8:
+        masked_acc = account_number[:3] + '****' + account_number[-4:]
+    elif payment_method == 'card' and account_number:
+        masked_acc = '**** **** **** ' + account_number[-4:]
+    elif not account_number:
+        masked_acc = 'N/A (Campus Handover)' if payment_method == 'cash_on_meetup' else 'N/A'
+
+    is_paid = payment_method in ['bkash', 'nagad', 'rocket', 'card']
+
+    receipt_data = {
+        'receipt_no': f"CC-REC-{order_id:05d}",
+        'order_id': order_id,
+        'trx_id': trx_id,
+        'payment_method': method_labels.get(payment_method, payment_method.capitalize()),
+        'payment_method_code': payment_method,
+        'account_number': masked_acc,
+        'amount': float(amount or 0),
+        'payment_status': 'PAID (Verified)' if is_paid else 'PENDING CASH ON HANDOVER',
+        'is_paid': is_paid,
+        'issued_at': datetime.now().strftime('%d %b %Y, %I:%M %p'),
+        'buyer_id': buyer_id,
+        'buyer_name': buyer_name,
+        'delivery_place': delivery_place or 'UB Gate / Building Lobby',
+        'items': items or []
+    }
+    return json.dumps(receipt_data)
 
 
 def compute_product_age(purchase_date):
@@ -346,17 +399,27 @@ def profile(student_id=None):
 
     cur.execute("""
         SELECT o.order_id, o.final_bill, o.payment_method, o.delivery_date, 
-               o.delivery_place, o.delivery_status, o.order_type,
-               p.product_name, p.category, p.selling_price, u.name as seller_name
+               o.delivery_place, o.delivery_status, o.order_type, o.receipt, o.confirmation,
+               p.product_id, p.product_name, p.category, p.selling_price, u.name as seller_name,
+               (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM orders o
-        LEFT JOIN cart c ON o.cart_id = c.cart_id
-        LEFT JOIN added a ON c.cart_id = a.cart_id
-        LEFT JOIN product p ON a.product_id = p.product_id
+        LEFT JOIN product p ON p.order_id = o.order_id
         LEFT JOIN user u ON p.student_id = u.student_id
         WHERE o.st_buyer_id = %s AND (o.order_type = 'buy' OR o.order_type IS NULL)
         ORDER BY o.order_id DESC
     """, (target_student_id,))
-    purchases = cur.fetchall() or []
+    raw_purchases = cur.fetchall() or []
+    purchases = []
+    for pur in raw_purchases:
+        pur_dict = dict(pur)
+        if pur_dict.get('receipt'):
+            try:
+                pur_dict['receipt_data'] = json.loads(pur_dict['receipt'])
+            except Exception:
+                pur_dict['receipt_data'] = None
+        else:
+            pur_dict['receipt_data'] = None
+        purchases.append(pur_dict)
 
     cur.execute("""
         SELECT product_id, product_name, category, description,
@@ -795,10 +858,15 @@ def remove_from_cart(product_id):
 @app.route('/checkout', methods=['POST'])
 def checkout():
     student_id = session.get('student_id')
+    user_name = session.get('user_name', 'Student Buyer')
     if not student_id:
         return redirect(url_for('login'))
 
     delivery_place = request.form.get('delivery_place', 'UB Gate / Building Lobby')
+    payment_method = request.form.get('payment_method', 'cash_on_meetup')
+    account_number = request.form.get('account_number', '').strip()
+    trx_id = request.form.get('trx_id', '').strip()
+
     cur = mysql.connection.cursor()
 
     cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
@@ -810,9 +878,10 @@ def checkout():
     cart_id = user_cart['cart_id']
 
     cur.execute("""
-        SELECT p.product_id, p.selling_price 
+        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name
         FROM added a 
         JOIN product p ON a.product_id = p.product_id 
+        LEFT JOIN user u ON p.student_id = u.student_id
         WHERE a.cart_id = %s
     """, (cart_id,))
     items = cur.fetchall() or []
@@ -822,19 +891,50 @@ def checkout():
         return redirect(url_for('cart_view'))
 
     total_bill = sum(float(i['selling_price'] or 0) for i in items)
+    is_digital_paid = payment_method in ['bkash', 'nagad', 'rocket', 'card']
+    delivery_status = 'confirmed' if is_digital_paid else 'pending'
+    buyer_confirmation = 1 if is_digital_paid else 0
+    confirmation = 1 if is_digital_paid else 0
 
     cur.execute("""
         INSERT INTO orders 
-        (cart_id, st_buyer_id, final_bill, payment_method, delivery_date, delivery_place, delivery_status, order_type)
-        VALUES (%s, %s, %s, 'cash_on_meetup', CURDATE(), %s, 'pending', 'buy')
-    """, (cart_id, student_id, total_bill, delivery_place))
+        (cart_id, st_buyer_id, final_bill, payment_method, delivery_date, delivery_place, delivery_status, buyer_confirmation, confirmation, order_type)
+        VALUES (%s, %s, %s, %s, CURDATE(), %s, %s, %s, %s, 'buy')
+    """, (cart_id, student_id, total_bill, payment_method, delivery_place, delivery_status, buyer_confirmation, confirmation))
     order_id = cur.lastrowid
+
+    # Generate Digital Receipt
+    items_summary = [{'product_id': i['product_id'], 'product_name': i['product_name'], 'price': float(i['selling_price'] or 0), 'seller_name': i.get('seller_name', 'Peer')} for i in items]
+    receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, delivery_place, items_summary)
+    cur.execute("UPDATE orders SET receipt = %s WHERE order_id = %s", (receipt_json, order_id))
 
     cur.execute("UPDATE cart SET order_id = %s, total_bill = %s WHERE cart_id = %s", (order_id, total_bill, cart_id))
 
     # Mark items with order_id
     for item in items:
         cur.execute("UPDATE product SET order_id = %s WHERE product_id = %s", (order_id, item['product_id']))
+
+        # Send notification to seller
+        seller_id = item.get('seller_id')
+        if seller_id and seller_id != student_id:
+            msg = f"Order #{order_id}: {user_name} placed an order for '{item['product_name']}' (৳{item['selling_price']}) via {payment_method.replace('_', ' ').upper()}."
+            try:
+                cur.execute("""
+                    INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+                    VALUES (%s, %s, %s, 'payment_received', 'unread')
+                """, (seller_id, student_id, msg))
+            except Exception:
+                pass
+
+    # Send notification to buyer
+    buyer_msg = f"Order #{order_id} confirmed! Total: ৳{total_bill} via {payment_method.replace('_', ' ').upper()}. Delivery at {delivery_place}."
+    try:
+        cur.execute("""
+            INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+            VALUES (%s, %s, %s, 'order_confirmed', 'unread')
+        """, (student_id, student_id, buyer_msg))
+    except Exception:
+        pass
 
     # Clear current cart added items for next shopping session
     cur.execute("DELETE FROM added WHERE cart_id = %s", (cart_id,))
@@ -843,6 +943,228 @@ def checkout():
     cur.close()
 
     return redirect(url_for('profile'))
+
+
+@app.route('/buy-now/<int:product_id>', methods=['POST'])
+def buy_now(product_id):
+    student_id = session.get('student_id')
+    user_name = session.get('user_name', 'Student Buyer')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+
+    if not student_id:
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Please login to purchase.', 'redirect': url_for('login')}), 401
+        return redirect(url_for('login'))
+
+    delivery_place = request.form.get('delivery_place', 'UB Gate / Building Lobby')
+    payment_method = request.form.get('payment_method', 'bkash')
+    account_number = request.form.get('account_number', '').strip()
+    trx_id = request.form.get('trx_id', '').strip()
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("""
+        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name
+        FROM product p
+        LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE p.product_id = %s
+    """, (product_id,))
+    product = cur.fetchone()
+
+    if not product:
+        cur.close()
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Product not found.'}), 404
+        return redirect(url_for('marketplace'))
+
+    if product['seller_id'] == student_id:
+        cur.close()
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'You cannot purchase your own listed item.'}), 400
+        return redirect(url_for('product_detail', product_id=product_id))
+
+    # Ensure student cart exists
+    cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
+    user_cart = cur.fetchone()
+    if not user_cart:
+        cur.execute("INSERT INTO cart (student_id, total_bill) VALUES (%s, 0)", (student_id,))
+        mysql.connection.commit()
+        cart_id = cur.lastrowid
+    else:
+        cart_id = user_cart['cart_id']
+
+    total_bill = float(product['selling_price'] or 0)
+    is_digital_paid = payment_method in ['bkash', 'nagad', 'rocket', 'card']
+    delivery_status = 'confirmed' if is_digital_paid else 'pending'
+    buyer_confirmation = 1 if is_digital_paid else 0
+    confirmation = 1 if is_digital_paid else 0
+
+    cur.execute("""
+        INSERT INTO orders 
+        (cart_id, st_buyer_id, final_bill, payment_method, delivery_date, delivery_place, delivery_status, buyer_confirmation, confirmation, order_type)
+        VALUES (%s, %s, %s, %s, CURDATE(), %s, %s, %s, %s, 'buy')
+    """, (cart_id, student_id, total_bill, payment_method, delivery_place, delivery_status, buyer_confirmation, confirmation))
+    order_id = cur.lastrowid
+
+    # Generate Digital Receipt
+    items_summary = [{'product_id': product['product_id'], 'product_name': product['product_name'], 'price': total_bill, 'seller_name': product.get('seller_name', 'Peer')}]
+    receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, delivery_place, items_summary)
+    cur.execute("UPDATE orders SET receipt = %s WHERE order_id = %s", (receipt_json, order_id))
+
+    # Mark product with order_id
+    cur.execute("UPDATE product SET order_id = %s WHERE product_id = %s", (order_id, product_id))
+
+    # Notifications
+    seller_id = product.get('seller_id')
+    if seller_id and seller_id != student_id:
+        msg = f"Order #{order_id}: {user_name} purchased '{product['product_name']}' (৳{total_bill}) via {payment_method.replace('_', ' ').upper()}."
+        try:
+            cur.execute("""
+                INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+                VALUES (%s, %s, %s, 'payment_received', 'unread')
+            """, (seller_id, student_id, msg))
+        except Exception:
+            pass
+
+    buyer_msg = f"Order #{order_id} placed! ৳{total_bill} for '{product['product_name']}' via {payment_method.replace('_', ' ').upper()}. Handover at {delivery_place}."
+    try:
+        cur.execute("""
+            INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+            VALUES (%s, %s, %s, 'order_confirmed', 'unread')
+        """, (student_id, student_id, buyer_msg))
+    except Exception:
+        pass
+
+    mysql.connection.commit()
+    cur.close()
+
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'message': f"Order #{order_id} confirmed via {payment_method.replace('_', ' ').upper()}! Digital receipt generated.",
+            'order_id': order_id,
+            'redirect': url_for('profile')
+        })
+
+    return redirect(url_for('profile'))
+
+
+@app.route('/pay-order/<int:order_id>', methods=['POST'])
+def pay_order(order_id):
+    student_id = session.get('student_id')
+    user_name = session.get('user_name', 'Student Buyer')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+
+    if not student_id:
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Please login.'}), 401
+        return redirect(url_for('login'))
+
+    payment_method = request.form.get('payment_method', 'bkash')
+    account_number = request.form.get('account_number', '').strip()
+    trx_id = request.form.get('trx_id', '').strip()
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT o.order_id, o.final_bill, o.st_buyer_id, o.delivery_place,
+               p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name
+        FROM orders o
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE o.order_id = %s AND o.st_buyer_id = %s
+    """, (order_id, student_id))
+    order_rows = cur.fetchall() or []
+
+    if not order_rows:
+        cur.close()
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Order not found.'}), 404
+        return redirect(url_for('profile'))
+
+    order_info = order_rows[0]
+    total_bill = float(order_info['final_bill'] or 0)
+    items_summary = [{'product_id': r['product_id'], 'product_name': r['product_name'] or 'Campus Item', 'price': float(r['selling_price'] or 0), 'seller_name': r.get('seller_name', 'Peer')} for r in order_rows if r.get('product_id')]
+
+    receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, order_info['delivery_place'], items_summary)
+
+    cur.execute("""
+        UPDATE orders 
+        SET payment_method = %s, receipt = %s, delivery_status = 'confirmed', buyer_confirmation = 1, confirmation = 1
+        WHERE order_id = %s
+    """, (payment_method, receipt_json, order_id))
+
+    # Notify sellers
+    for r in order_rows:
+        seller_id = r.get('seller_id')
+        if seller_id and seller_id != student_id:
+            try:
+                cur.execute("""
+                    INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+                    VALUES (%s, %s, %s, 'payment_received', 'unread')
+                """, (seller_id, student_id, f"Order #{order_id} payment of ৳{total_bill} received via {payment_method.replace('_', ' ').upper()}!"))
+            except Exception:
+                pass
+
+    mysql.connection.commit()
+    cur.close()
+
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'message': f"Payment of ৳{total_bill} confirmed via {payment_method.replace('_', ' ').upper()}! Receipt issued.",
+            'order_id': order_id,
+            'redirect': url_for('profile')
+        })
+
+    return redirect(url_for('profile'))
+
+
+@app.route('/api/order/<int:order_id>/receipt')
+def get_order_receipt(order_id):
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT o.order_id, o.st_buyer_id, o.final_bill, o.payment_method, o.delivery_place, 
+               o.delivery_date, o.delivery_status, o.receipt,
+               p.product_name, p.selling_price, u.name as seller_name
+        FROM orders o
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE o.order_id = %s AND (o.st_buyer_id = %s OR p.student_id = %s)
+    """, (order_id, student_id, student_id))
+    rows = cur.fetchall() or []
+    cur.close()
+
+    if not rows:
+        return jsonify({'success': False, 'message': 'Receipt not found or access denied.'}), 404
+
+    row = rows[0]
+    receipt_data = None
+    if row.get('receipt'):
+        try:
+            receipt_data = json.loads(row['receipt'])
+        except Exception:
+            receipt_data = {'raw_text': row['receipt']}
+
+    if not receipt_data or not isinstance(receipt_data, dict):
+        is_paid = (row.get('payment_method') or '') in ['bkash', 'nagad', 'rocket', 'card']
+        receipt_data = {
+            'receipt_no': f"CC-REC-{order_id:05d}",
+            'order_id': order_id,
+            'trx_id': f"TX-{order_id:05d}",
+            'payment_method': (row.get('payment_method') or 'cash_on_meetup').replace('_', ' ').title(),
+            'payment_method_code': row.get('payment_method') or 'cash_on_meetup',
+            'amount': float(row.get('final_bill') or 0),
+            'payment_status': 'PAID (Verified)' if is_paid else 'PENDING CASH ON HANDOVER',
+            'is_paid': is_paid,
+            'delivery_place': row.get('delivery_place') or 'UB Gate / Building Lobby',
+            'items': [{'product_name': r.get('product_name') or 'Item', 'price': float(r.get('selling_price') or 0)} for r in rows if r.get('product_name')]
+        }
+
+    return jsonify({'success': True, 'receipt': receipt_data})
 
 
 # =========================================================================

@@ -249,7 +249,7 @@
     }
     .btn-checkout {
       width: 100%;
-      background: linear-gradient(135deg, #10b981, #059669);
+      background: linear-gradient(135deg, #d82a68, #be185d);
       color: #ffffff;
       padding: 14px;
       border-radius: 12px;
@@ -261,12 +261,89 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-top: 20px;
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+      margin-top: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       transition: all 0.2s ease;
     }
     .btn-checkout:hover {
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Cart Payment Methods Selector */
+    .cart-pay-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 14px 0;
+    }
+    .cart-pay-opt {
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .cart-pay-opt:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+    .cart-pay-opt.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+    }
+    .cart-pay-opt.active.bkash {
+      border-color: #d82a68;
+      background: rgba(216, 42, 104, 0.18);
+    }
+    .cart-pay-opt.active.nagad {
+      border-color: #f7941d;
+      background: rgba(247, 148, 29, 0.18);
+    }
+    .cart-pay-opt.active.rocket {
+      border-color: #8c3494;
+      background: rgba(140, 52, 148, 0.18);
+    }
+    .cart-pay-opt.active.card {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.18);
+    }
+    .cart-pay-icon {
+      font-size: 18px;
+    }
+    .cart-pay-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .cart-field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .cart-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 13px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .cart-input:focus {
+      outline: none;
+      border-color: #10b981;
     }
 
     /* Empty state */
@@ -398,20 +475,90 @@
             <span>৳{{ total_bill }}</span>
           </div>
 
-          <form action="{{ url_for('checkout') }}" method="POST" style="margin-top: 16px;">
+          <form action="{{ url_for('checkout') }}" method="POST" id="cartCheckoutForm" style="margin-top: 16px;">
+            <input type="hidden" name="payment_method" id="cartPaymentMethodInput" value="bkash">
+
             <div style="margin-bottom: 12px;">
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">
-                <i class="ph ph-map-pin"></i> Handover Location
+              <label class="cart-field-label">
+                <i class="ph ph-map-pin"></i> Campus Handover Location
               </label>
-              <select name="delivery_place" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; font-family: inherit; font-size: 13px;">
+              <select name="delivery_place" class="cart-input">
                 <option value="UB Gate / Building Lobby">UB Gate / Building Lobby</option>
                 <option value="Library Gate / 3rd Floor">Library Gate / 3rd Floor</option>
                 <option value="Cafeteria (UB-02)">Cafeteria (UB-02)</option>
+                <option value="Prangon / Courtyard">Prangon / Courtyard</option>
                 <option value="Khaas Food Court Area">Khaas Food Court Area</option>
               </select>
             </div>
-            <button type="submit" class="btn-checkout" style="width: 100%; cursor: pointer;">
-              <i class="ph ph-handshake"></i> Request Meetup & Purchase
+
+            <!-- Payment Method Choice Grid -->
+            <label class="cart-field-label"><i class="ph ph-wallet"></i> Choose Payment Method</label>
+            <div class="cart-pay-grid">
+              <div class="cart-pay-opt active bkash" onclick="setCartPaymentMethod('bkash', this)">
+                <div class="cart-pay-icon" style="color: #d82a68;"><i class="ph-bold ph-device-mobile"></i></div>
+                <div class="cart-pay-name">bKash</div>
+              </div>
+              <div class="cart-pay-opt" onclick="setCartPaymentMethod('nagad', this)">
+                <div class="cart-pay-icon" style="color: #f7941d;"><i class="ph-bold ph-lightning"></i></div>
+                <div class="cart-pay-name">Nagad</div>
+              </div>
+              <div class="cart-pay-opt" onclick="setCartPaymentMethod('rocket', this)">
+                <div class="cart-pay-icon" style="color: #8c3494;"><i class="ph-bold ph-rocket-launch"></i></div>
+                <div class="cart-pay-name">Rocket</div>
+              </div>
+              <div class="cart-pay-opt" onclick="setCartPaymentMethod('card', this)">
+                <div class="cart-pay-icon" style="color: #3b82f6;"><i class="ph-bold ph-credit-card"></i></div>
+                <div class="cart-pay-name">Card</div>
+              </div>
+              <div class="cart-pay-opt" onclick="setCartPaymentMethod('cash_on_meetup', this)" style="grid-column: span 2;">
+                <div class="cart-pay-icon" style="color: #10b981;"><i class="ph-bold ph-handshake"></i></div>
+                <div class="cart-pay-name">Cash on Meetup</div>
+              </div>
+            </div>
+
+            <!-- Dynamic MFS Fields Tray -->
+            <div id="cartMfsTray" style="background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+              <div style="font-size: 11.5px; font-weight: 700; color: #ffffff; margin-bottom: 4px;" id="cartMfsTitle">bKash Payment</div>
+              <p id="cartMfsNotice" style="font-size: 11px; color: #94a3b8; margin: 0 0 8px;">Send money to 01700000000</p>
+              
+              <label class="cart-field-label" id="cartMfsPhoneLabel">Account Number</label>
+              <input type="text" name="account_number" id="cartMfsPhone" class="cart-input" placeholder="017XXXXXXXX" value="01712345678">
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="cart-field-label" style="margin: 0;">TrxID</label>
+                <button type="button" onclick="generateCartTrx()" style="background: transparent; border: none; color: #38bdf8; font-size: 10.5px; cursor: pointer; text-decoration: underline;">Auto TrxID</button>
+              </div>
+              <input type="text" name="trx_id" id="cartTrxId" class="cart-input" placeholder="e.g. BK99812A" value="BK784912">
+            </div>
+
+            <!-- Dynamic Card Fields Tray -->
+            <div id="cartCardTray" style="display: none; background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(59, 130, 246, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+              <label class="cart-field-label">Card Number</label>
+              <input type="text" class="cart-input" placeholder="4242 8899 1234 5678" value="4242 8899 1234 5678">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label class="cart-field-label">Expiry</label>
+                  <input type="text" class="cart-input" placeholder="12/28" value="12/28">
+                </div>
+                <div>
+                  <label class="cart-field-label">CVV</label>
+                  <input type="password" class="cart-input" placeholder="123" value="888">
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Cash Tray -->
+            <div id="cartCashTray" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;">
+              <div style="font-size: 11.5px; color: #34d399; font-weight: 700;">
+                <i class="ph-bold ph-check"></i> Cash on Meetup
+              </div>
+              <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">
+                Inspect goods & pay cash in person on campus.
+              </div>
+            </div>
+
+            <button type="submit" id="cartCheckoutBtn" class="btn-checkout">
+              <i class="ph-bold ph-shield-check"></i> <span id="cartBtnText">Pay ৳{{ total_bill }} via bKash</span>
             </button>
           </form>
         </div>
@@ -480,9 +627,78 @@
     {% endif %}
   </main>
 
-  <footer class="footer">
-    <p>&copy; 2026 CampusCycle &bull; BRAC University Student Marketplace</p>
-  </footer>
+  <script>
+    let currentCartMethod = 'bkash';
+
+    function setCartPaymentMethod(method, el) {
+      currentCartMethod = method;
+      document.getElementById('cartPaymentMethodInput').value = method;
+
+      document.querySelectorAll('.cart-pay-opt').forEach(opt => {
+        opt.classList.remove('active', 'bkash', 'nagad', 'rocket', 'card');
+      });
+      el.classList.add('active', method);
+
+      const mfsTray = document.getElementById('cartMfsTray');
+      const cardTray = document.getElementById('cartCardTray');
+      const cashTray = document.getElementById('cartCashTray');
+      const checkoutBtn = document.getElementById('cartCheckoutBtn');
+      const btnText = document.getElementById('cartBtnText');
+
+      mfsTray.style.display = 'none';
+      cardTray.style.display = 'none';
+      cashTray.style.display = 'none';
+
+      if (method === 'bkash') {
+        mfsTray.style.display = 'block';
+        document.getElementById('cartMfsTitle').innerText = 'bKash Payment';
+        document.getElementById('cartMfsNotice').innerText = 'Send Money to Merchant/Personal No: 01700000000';
+        document.getElementById('cartMfsPhoneLabel').innerText = 'bKash Account Number';
+        document.getElementById('cartMfsPhone').placeholder = '017XXXXXXXX';
+        checkoutBtn.style.background = 'linear-gradient(135deg, #d82a68, #be185d)';
+        btnText.innerText = 'Pay ৳{{ total_bill }} via bKash';
+        generateCartTrx();
+      } else if (method === 'nagad') {
+        mfsTray.style.display = 'block';
+        document.getElementById('cartMfsTitle').innerText = 'Nagad Payment';
+        document.getElementById('cartMfsNotice').innerText = 'Send payment to Nagad No: 01800000000';
+        document.getElementById('cartMfsPhoneLabel').innerText = 'Nagad Account Number';
+        document.getElementById('cartMfsPhone').placeholder = '018XXXXXXXX';
+        checkoutBtn.style.background = 'linear-gradient(135deg, #f7941d, #d97706)';
+        btnText.innerText = 'Pay ৳{{ total_bill }} via Nagad';
+        generateCartTrx();
+      } else if (method === 'rocket') {
+        mfsTray.style.display = 'block';
+        document.getElementById('cartMfsTitle').innerText = 'Rocket Payment';
+        document.getElementById('cartMfsNotice').innerText = 'Send payment to Rocket No: 019000000009';
+        document.getElementById('cartMfsPhoneLabel').innerText = 'Rocket Account Number';
+        document.getElementById('cartMfsPhone').placeholder = '019XXXXXXXXX';
+        checkoutBtn.style.background = 'linear-gradient(135deg, #8c3494, #6b21a8)';
+        btnText.innerText = 'Pay ৳{{ total_bill }} via Rocket';
+        generateCartTrx();
+      } else if (method === 'card') {
+        cardTray.style.display = 'block';
+        checkoutBtn.style.background = 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+        btnText.innerText = 'Pay ৳{{ total_bill }} via Card';
+      } else if (method === 'cash_on_meetup') {
+        cashTray.style.display = 'block';
+        checkoutBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        btnText.innerText = 'Place Order (Pay Cash on Meetup)';
+      }
+    }
+
+    function generateCartTrx() {
+      const prefixMap = { 'bkash': 'BK', 'nagad': 'NG', 'rocket': 'RK' };
+      const prefix = prefixMap[currentCartMethod] || 'TX';
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = prefix;
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const trxInput = document.getElementById('cartTrxId');
+      if (trxInput) trxInput.value = result;
+    }
+  </script>
 
 </body>
 </html>
