@@ -449,6 +449,13 @@
                     <span><i class="ph ph-books"></i> {{ item.used_in_course }}</span>
                   {% endif %}
                   <span><i class="ph ph-user"></i> {{ item.seller_name or 'Peer' }}</span>
+                  {% if item.review_count and item.review_count > 0 %}
+                    <span style="color: #fbbf24; font-weight: 700; display: inline-flex; align-items: center; gap: 2px;">
+                      <i class="ph-fill ph-star"></i> {{ "%.1f"|format(item.avg_rating) }} ({{ item.review_count }} review{{ 's' if item.review_count > 1 else '' }})
+                    </span>
+                  {% else %}
+                    <span style="color: #64748b; font-size: 11px;"><i class="ph ph-star"></i> Unrated</span>
+                  {% endif %}
                 </div>
                 <div class="cart-item-price">৳{{ item.selling_price }}</div>
               </div>

@@ -784,6 +784,20 @@
                     </div>
                   {% endif %}
                   <h3 class="card-title">{{ item.product_name }}</h3>
+                  
+                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                    {% if item.review_count and item.review_count > 0 %}
+                      <span style="color: #fbbf24; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
+                        <i class="ph-fill ph-star"></i> {{ "%.1f"|format(item.avg_rating) }}
+                      </span>
+                      <span style="color: #94a3b8; font-size: 11px;">({{ item.review_count }} review{{ 's' if item.review_count > 1 else '' }})</span>
+                    {% else %}
+                      <span style="color: #64748b; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                        <i class="ph ph-star"></i> New / Unrated
+                      </span>
+                    {% endif %}
+                  </div>
+
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
                     <a href="{{ url_for('profile', student_id=item.seller_id) }}" style="color: #38bdf8; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="Click to view full seller profile">
                       <i class="ph-bold ph-user-circle"></i> {{ item.seller_name or 'BRACU Peer' }}

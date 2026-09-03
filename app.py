@@ -459,11 +459,13 @@ def profile(student_id=None):
     cur.execute("""
         SELECT o.order_id, o.final_bill, o.payment_method, o.delivery_date, 
                o.delivery_place, o.delivery_status, o.order_type, o.receipt, o.confirmation,
-               p.product_id, p.product_name, p.category, p.selling_price, u.name as seller_name,
+               p.product_id, p.product_name, p.category, p.selling_price, p.student_id as seller_id, u.name as seller_name,
+               r.rating as buyer_rating, r.comment as buyer_comment,
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM orders o
         LEFT JOIN product p ON p.order_id = o.order_id
         LEFT JOIN user u ON p.student_id = u.student_id
+        LEFT JOIN review r ON r.order_id = o.order_id AND r.reviewer_id = o.st_buyer_id
         WHERE o.st_buyer_id = %s AND (o.order_type = 'buy' OR o.order_type IS NULL)
         ORDER BY o.order_id DESC
     """, (target_student_id,))
@@ -504,6 +506,20 @@ def profile(student_id=None):
     """, (target_student_id, target_student_id))
     exchanges = cur.fetchall() or []
 
+    # Fetch verified reviews received by this student
+    cur.execute("""
+        SELECT r.r_id, r.rating, r.comment, r.review_date, r.order_id,
+               u.name as reviewer_name, u.student_id as reviewer_student_id,
+               p.product_name
+        FROM review r
+        JOIN user u ON r.reviewer_id = u.student_id
+        LEFT JOIN orders o ON r.order_id = o.order_id
+        LEFT JOIN product p ON p.order_id = o.order_id
+        WHERE r.reviewee_id = %s
+        ORDER BY r.review_date DESC
+    """, (target_student_id,))
+    reviews_received = cur.fetchall() or []
+
     cur.close()
     cart_count = get_cart_count(current_student_id)
     wishlist_count = get_wishlist_count(current_student_id)
@@ -517,6 +533,7 @@ def profile(student_id=None):
         purchases=purchases,
         sales=sales,
         exchanges=exchanges,
+        reviews_received=reviews_received,
         cart_count=cart_count,
         wishlist_count=wishlist_count,
         is_own_profile=is_own_profile
@@ -589,11 +606,40 @@ def marketplace():
     """)
     sold_products = list(cur.fetchall() or [])
 
+    # Product-specific review ratings map
+    cur.execute("""
+        SELECT COALESCE(p.product_id, JSON_UNQUOTE(JSON_EXTRACT(o.receipt, '$.items[0].product_id')), a.product_id) as pid,
+               AVG(r.rating) as avg_rating, COUNT(DISTINCT r.r_id) as review_count
+        FROM review r
+        JOIN orders o ON r.order_id = o.order_id
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN added a ON a.cart_id = o.cart_id
+        GROUP BY pid
+    """)
+    review_stat_rows = cur.fetchall() or []
+    review_stat_map = {}
+    for rs in review_stat_rows:
+        if rs.get('pid'):
+            try:
+                pid = int(rs['pid'])
+                review_stat_map[pid] = {
+                    'avg_rating': round(float(rs['avg_rating']), 1),
+                    'review_count': int(rs['review_count'])
+                }
+            except Exception:
+                pass
+
     for p in available_products:
         p['age'] = compute_product_age(p.get('purchase_date'))
+        p_stats = review_stat_map.get(p['product_id'], {'avg_rating': 0.0, 'review_count': 0})
+        p['avg_rating'] = p_stats['avg_rating']
+        p['review_count'] = p_stats['review_count']
 
     for p in sold_products:
         p['age'] = compute_product_age(p.get('purchase_date'))
+        p_stats = review_stat_map.get(p['product_id'], {'avg_rating': 0.0, 'review_count': 0})
+        p['avg_rating'] = p_stats['avg_rating']
+        p['review_count'] = p_stats['review_count']
 
     wishlisted_pids = []
     if student_id:
@@ -668,7 +714,35 @@ def product_detail(product_id):
     """, (product['student_id'],))
     seller = cur.fetchone()
 
-    seller_trust_score = 4.5
+    seller_trust_score = 5.0
+    total_reviews = 0
+    seller_reviews = []
+    product_reviews = []
+    product_avg_rating = 0.0
+    product_reviews_count = 0
+
+    # 1. Fetch reviews specifically left for THIS product
+    cur.execute("""
+        SELECT r.r_id, r.rating, r.comment, r.review_date, r.order_id,
+               u.name as reviewer_name, u.student_id as reviewer_student_id,
+               COALESCE(p.product_name, JSON_UNQUOTE(JSON_EXTRACT(o.receipt, '$.items[0].product_name')), 'This Product') as product_name
+        FROM review r
+        JOIN user u ON r.reviewer_id = u.student_id
+        JOIN orders o ON r.order_id = o.order_id
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN added a ON a.cart_id = o.cart_id
+        WHERE p.product_id = %s 
+           OR JSON_EXTRACT(o.receipt, '$.items[0].product_id') = %s
+           OR a.product_id = %s
+        GROUP BY r.r_id
+        ORDER BY r.review_date DESC
+    """, (product_id, product_id, product_id))
+    product_reviews = cur.fetchall() or []
+    product_reviews_count = len(product_reviews)
+    if product_reviews_count > 0:
+        product_avg_rating = round(sum([float(r['rating'] or 5) for r in product_reviews]) / product_reviews_count, 1)
+
+    # 2. Fetch overall seller reputation and seller other reviews
     if seller:
         cur.execute("""
             SELECT AVG(rating) as avg_rating, COUNT(r_id) as total_reviews 
@@ -678,8 +752,27 @@ def product_detail(product_id):
         t_data = cur.fetchone()
         if t_data and t_data['total_reviews'] and t_data['total_reviews'] > 0:
             seller_trust_score = float(t_data['avg_rating'])
+            total_reviews = int(t_data['total_reviews'])
         elif seller.get('trust_score'):
             seller_trust_score = float(seller['trust_score'])
+            total_reviews = 1 if seller_trust_score > 0 else 0
+
+        # Fetch other reviews for this seller
+        cur.execute("""
+            SELECT r.r_id, r.rating, r.comment, r.review_date, r.order_id,
+                   u.name as reviewer_name, u.student_id as reviewer_student_id,
+                   p.product_name
+            FROM review r
+            JOIN user u ON r.reviewer_id = u.student_id
+            LEFT JOIN orders o ON r.order_id = o.order_id
+            LEFT JOIN product p ON p.order_id = o.order_id
+            WHERE r.reviewee_id = %s
+            ORDER BY r.review_date DESC
+            LIMIT 12
+        """, (seller['student_id'],))
+        seller_reviews = cur.fetchall() or []
+
+    seller_other_reviews = [r for r in seller_reviews if r['r_id'] not in [pr['r_id'] for pr in product_reviews]]
 
     cur.close()
 
@@ -692,6 +785,11 @@ def product_detail(product_id):
         photos=photos,
         seller=seller,
         seller_trust_score=seller_trust_score,
+        total_reviews=total_reviews,
+        product_reviews=product_reviews,
+        product_avg_rating=product_avg_rating,
+        product_reviews_count=product_reviews_count,
+        seller_other_reviews=seller_other_reviews,
         product_age=product_age,
         cart_count=cart_count
     )
@@ -970,7 +1068,34 @@ def cart_view():
         WHERE c.student_id = %s
         ORDER BY p.product_id DESC
     """, (student_id,))
-    cart_items = cur.fetchall() or []
+    cart_items = list(cur.fetchall() or [])
+
+    # Attach product-specific review ratings to cart items
+    cur.execute("""
+        SELECT COALESCE(p.product_id, JSON_UNQUOTE(JSON_EXTRACT(o.receipt, '$.items[0].product_id')), a.product_id) as pid,
+               AVG(r.rating) as avg_rating, COUNT(DISTINCT r.r_id) as review_count
+        FROM review r
+        JOIN orders o ON r.order_id = o.order_id
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN added a ON a.cart_id = o.cart_id
+        GROUP BY pid
+    """)
+    review_stat_rows = cur.fetchall() or []
+    review_stat_map = {}
+    for rs in review_stat_rows:
+        if rs.get('pid'):
+            try:
+                review_stat_map[int(rs['pid'])] = {
+                    'avg_rating': round(float(rs['avg_rating']), 1),
+                    'review_count': int(rs['review_count'])
+                }
+            except Exception:
+                pass
+
+    for item in cart_items:
+        stats = review_stat_map.get(item['product_id'], {'avg_rating': 0.0, 'review_count': 0})
+        item['avg_rating'] = stats['avg_rating']
+        item['review_count'] = stats['review_count']
 
     total_bill = sum(float(item['selling_price'] or 0) for item in cart_items)
 
@@ -1032,12 +1157,12 @@ def add_to_cart_route(product_id):
 
     cur = mysql.connection.cursor()
 
-    cur.execute("SELECT sold_date, product_name FROM product WHERE product_id = %s", (product_id,))
+    cur.execute("SELECT product_name FROM product WHERE product_id = %s", (product_id,))
     p_check = cur.fetchone()
-    if p_check and p_check.get('sold_date'):
+    if not p_check:
         cur.close()
         if is_ajax or request.method == 'POST':
-            return jsonify({'success': False, 'message': f"'{p_check.get('product_name', 'Item')}' has already been sold."}), 400
+            return jsonify({'success': False, 'message': 'Product not found.'}), 404
         return redirect(url_for('marketplace'))
 
     cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
@@ -1130,18 +1255,6 @@ def checkout():
         cur.close()
         return redirect(url_for('cart_view'))
 
-    # Filter out any already-sold items to ensure clean order processing
-    available_items = [i for i in items if not i.get('sold_date')]
-    sold_items = [i for i in items if i.get('sold_date')]
-    if sold_items:
-        for si in sold_items:
-            cur.execute("DELETE FROM added WHERE cart_id = %s AND product_id = %s", (cart_id, si['product_id']))
-        mysql.connection.commit()
-    if not available_items:
-        cur.close()
-        return redirect(url_for('cart_view'))
-    items = available_items
-
     total_bill = sum(float(i['selling_price'] or 0) for i in items)
     is_digital_paid = payment_method in ['bkash', 'nagad', 'rocket', 'card']
     delivery_status = 'confirmed' if is_digital_paid else 'pending'
@@ -1162,9 +1275,9 @@ def checkout():
 
     cur.execute("UPDATE cart SET order_id = %s, total_bill = %s WHERE cart_id = %s", (order_id, total_bill, cart_id))
 
-    # Mark items with order_id and sold_date
+    # Link items with order_id and keep product active for continuous purchases
     for item in items:
-        cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, item['product_id']))
+        cur.execute("UPDATE product SET order_id = %s, sold_date = NULL WHERE product_id = %s", (order_id, item['product_id']))
         try:
             cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (item['product_id'],))
         except Exception:
@@ -1233,12 +1346,6 @@ def buy_now(product_id):
             return jsonify({'success': False, 'message': 'Product not found.'}), 404
         return redirect(url_for('marketplace'))
 
-    if product.get('sold_date'):
-        cur.close()
-        if is_ajax:
-            return jsonify({'success': False, 'message': 'This item has already been sold to another peer.'}), 400
-        return redirect(url_for('product_detail', product_id=product_id))
-
     if product['seller_id'] == student_id:
         cur.close()
         if is_ajax:
@@ -1273,12 +1380,8 @@ def buy_now(product_id):
     receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, delivery_place, items_summary)
     cur.execute("UPDATE orders SET receipt = %s WHERE order_id = %s", (receipt_json, order_id))
 
-    # Mark product with order_id and sold_date
-    cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, product_id))
-    try:
-        cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (product_id,))
-    except Exception:
-        pass
+    # Link product with order_id and keep product active in stock
+    cur.execute("UPDATE product SET order_id = %s, sold_date = NULL WHERE product_id = %s", (order_id, product_id))
 
     # Notifications
     seller_id = product.get('seller_id')
@@ -1442,6 +1545,148 @@ def get_order_receipt(order_id):
         }
 
     return jsonify({'success': True, 'receipt': receipt_data})
+
+
+@app.route('/submit-review', methods=['POST'])
+def submit_review():
+    """
+    Submits or updates a peer review for a purchased product/order.
+    Strictly enforces that only verified buyers who bought the product can review.
+    """
+    reviewer_id = session.get('student_id')
+    if not reviewer_id:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Please login to submit a review.'}), 401
+        return redirect(url_for('login'))
+
+    order_id = request.form.get('order_id')
+    rating = request.form.get('rating')
+    comment = request.form.get('comment', '').strip()
+
+    if not order_id or not rating:
+        return jsonify({'success': False, 'message': 'Order ID and Star Rating are required.'}), 400
+
+    try:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            return jsonify({'success': False, 'message': 'Rating must be between 1 and 5 stars.'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'message': 'Invalid rating value.'}), 400
+
+    cur = mysql.connection.cursor()
+
+    # 1. VERIFY: Did this student actually buy this product/order?
+    cur.execute("""
+        SELECT o.order_id, o.st_buyer_id, o.final_bill, o.receipt,
+               p.product_id, p.product_name, p.student_id as seller_id,
+               u.name as buyer_name
+        FROM orders o
+        LEFT JOIN product p ON p.order_id = o.order_id
+        LEFT JOIN user u ON u.student_id = o.st_buyer_id
+        WHERE o.order_id = %s AND o.st_buyer_id = %s
+        LIMIT 1
+    """, (order_id, reviewer_id))
+    order_row = cur.fetchone()
+
+    if not order_row:
+        cur.close()
+        return jsonify({
+            'success': False, 
+            'message': 'Permission denied: You can only review products/sellers after completing a purchase.'
+        }), 403
+
+    seller_id = order_row.get('seller_id')
+    if not seller_id:
+        # Fallback 1: Parse from receipt items if stored in JSON
+        if order_row.get('receipt'):
+            try:
+                rec = json.loads(order_row['receipt'])
+                if rec.get('items') and len(rec['items']) > 0:
+                    first_pid = rec['items'][0].get('product_id')
+                    if first_pid:
+                        cur.execute("SELECT student_id as seller_id, product_name FROM product WHERE product_id = %s", (first_pid,))
+                        p_row = cur.fetchone()
+                        if p_row:
+                            seller_id = p_row['seller_id']
+                            if not order_row.get('product_name'):
+                                order_row['product_name'] = p_row['product_name']
+            except Exception:
+                pass
+
+    if not seller_id:
+        # Fallback 2: find seller from cart items if product.order_id was not populated directly
+        cur.execute("""
+            SELECT p.student_id as seller_id, p.product_name
+            FROM orders o
+            JOIN cart c ON o.cart_id = c.cart_id
+            JOIN added a ON c.cart_id = a.cart_id
+            JOIN product p ON a.product_id = p.product_id
+            WHERE o.order_id = %s
+            LIMIT 1
+        """, (order_id,))
+        p_row = cur.fetchone()
+        if p_row:
+            seller_id = p_row['seller_id']
+            if not order_row.get('product_name'):
+                order_row['product_name'] = p_row['product_name']
+
+    if not seller_id:
+        cur.close()
+        return jsonify({'success': False, 'message': 'Seller could not be identified for this order.'}), 400
+
+    if seller_id == reviewer_id:
+        cur.close()
+        return jsonify({'success': False, 'message': 'You cannot review your own listing.'}), 400
+
+    # 2. Insert or update review record
+    cur.execute("SELECT r_id FROM review WHERE order_id = %s AND reviewer_id = %s", (order_id, reviewer_id))
+    existing_review = cur.fetchone()
+
+    if existing_review:
+        cur.execute("""
+            UPDATE review
+            SET rating = %s, comment = %s, review_date = NOW()
+            WHERE r_id = %s
+        """, (rating, comment, existing_review['r_id']))
+    else:
+        cur.execute("""
+            INSERT INTO review (reviewer_id, reviewee_id, rating, comment, order_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (reviewer_id, seller_id, rating, comment, order_id))
+
+    # 3. Recalculate seller's trust score derived from all reviews
+    cur.execute("SELECT AVG(rating) as avg_rating FROM review WHERE reviewee_id = %s", (seller_id,))
+    avg_data = cur.fetchone()
+    if avg_data and avg_data['avg_rating']:
+        new_trust_score = round(float(avg_data['avg_rating']), 1)
+        cur.execute("UPDATE user SET trust_score = %s WHERE student_id = %s", (new_trust_score, seller_id))
+
+    # 4. Notify seller of review
+    buyer_name = order_row.get('buyer_name') or reviewer_id
+    prod_name = order_row.get('product_name') or 'purchased item'
+    star_str = '★' * rating
+    notif_text = f"⭐ {buyer_name} left you a {rating}-star review ({star_str}) for Order #{order_id} ({prod_name}): \"{comment[:50]}\""
+    
+    try:
+        cur.execute("""
+            INSERT INTO notification (buyer_notification, user_notification, text, notification_type, notification_status)
+            VALUES (%s, %s, %s, 'review_received', 'unread')
+        """, (seller_id, reviewer_id, notif_text))
+    except Exception:
+        pass
+
+    mysql.connection.commit()
+    cur.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'message': 'Thank you! Your verified purchase review has been recorded.',
+            'rating': rating,
+            'comment': comment
+        })
+
+    return redirect(url_for('profile'))
 
 
 # =========================================================================
