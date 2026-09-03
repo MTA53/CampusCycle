@@ -187,3 +187,19 @@ CREATE TABLE review (
     FOREIGN KEY (reviewee_id) REFERENCES `user`(student_id),
     FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
+
+-- 17. WISHLIST_CUSTOM_ITEM (custom requested/unlisted items wanted by students)
+CREATE TABLE IF NOT EXISTS wishlist_custom_item (
+    item_id INT AUTO_INCREMENT PRIMARY KEY,
+    wishlist_id INT NOT NULL,
+    student_id VARCHAR(50) NOT NULL,
+    item_name VARCHAR(150) NOT NULL,
+    category VARCHAR(50),
+    target_price DECIMAL(10,2) NULL,
+    used_in_course VARCHAR(100) NULL,
+    notes TEXT NULL,
+    status VARCHAR(20) DEFAULT 'looking',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (wishlist_id) REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES `user`(student_id) ON DELETE CASCADE
+);

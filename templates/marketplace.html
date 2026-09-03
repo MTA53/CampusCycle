@@ -262,6 +262,296 @@
       text-align: right;
     }
 
+    /* Section Styling */
+    .market-section {
+      margin-bottom: 48px;
+    }
+    .market-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .market-section-title {
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+    .section-badge-pill {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .section-badge-rose {
+      background: rgba(244, 63, 94, 0.18);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+    .market-section-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* Sold Card Styling */
+    .product-card.sold-card {
+      background: rgba(15, 23, 42, 0.55);
+      border-color: rgba(244, 63, 94, 0.22);
+      opacity: 0.92;
+      position: relative;
+    }
+    .product-card.sold-card:hover {
+      border-color: rgba(244, 63, 94, 0.45);
+    }
+    .product-card.sold-card .card-img {
+      filter: grayscale(35%) brightness(0.85);
+    }
+    .badge-sold {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(225, 29, 72, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+    .badge-sold-date {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      color: #fda4af;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      z-index: 2;
+    }
+    .card-wishlist-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      z-index: 3;
+    }
+    .card-wishlist-btn:hover, .card-wishlist-btn.active {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: #f43f5e;
+      color: #f43f5e;
+      transform: scale(1.1);
+    }
+    .sold-action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Search & Filter Controls */
+    .filter-section {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 22px 24px;
+      margin-bottom: 36px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    .search-input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .search-icon-left {
+      position: absolute;
+      left: 16px;
+      font-size: 20px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      background: rgba(11, 17, 32, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 13px 44px 13px 48px;
+      color: #ffffff;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+      background: rgba(11, 17, 32, 0.95);
+    }
+    .search-clear-btn {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 18px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 50%;
+      transition: color 0.2s;
+    }
+    .search-clear-btn:hover {
+      color: #ffffff;
+    }
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .filter-controls-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+    .filter-label-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .filter-select {
+      background: rgba(11, 17, 32, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-select:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+    .category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .category-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    .category-pill:hover {
+      color: #ffffff;
+      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .category-pill.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      color: #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+    }
+    .filter-stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 12.5px;
+      color: #94a3b8;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .filter-reset-btn {
+      background: none;
+      border: none;
+      color: #f43f5e;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      transition: all 0.2s;
+    }
+    .filter-reset-btn:hover {
+      background: rgba(244, 63, 94, 0.2);
+      color: #ffffff;
+    }
+    .no-results-box {
+      text-align: center;
+      padding: 48px 24px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      margin-bottom: 32px;
+    }
+
     /* Footer */
     .footer {
       text-align: center;
@@ -313,8 +603,8 @@
               <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 13px;">Loading alerts...</div>
             </div>
             <div style="padding: 8px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.2);">
-              <a href="{{ url_for('wishlist_view') }}" style="color: #cbd5e1; font-size: 12px; text-decoration: none; font-weight: 700;">
-                Go to Wishlist & Notifications &rarr;
+              <a href="{{ url_for('notifications_view') }}" style="color: #38bdf8; font-size: 12px; text-decoration: none; font-weight: 700;">
+                View All Notifications & Activity &rarr;
               </a>
             </div>
           </div>
@@ -358,63 +648,261 @@
       {% endif %}
     </div>
 
-    {% if products and products|length > 0 %}
-      <div class="products-grid">
-        {% for item in products %}
-          <div class="product-card">
-            <div class="card-img-wrapper">
-              <img src="{{ item.photo or 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' }}" alt="{{ item.product_name }}" class="card-img">
-              <span class="badge-cat">{{ item.category or 'Academic' }}</span>
-              {% if item.age %}
-                <span class="badge-age">Age: {{ item.age }}</span>
-              {% endif %}
-            </div>
+    <!-- Search & Filter Controls -->
+    <section class="filter-section" id="marketplaceFilterSection">
+      <div class="search-input-group">
+        <i class="ph ph-magnifying-glass search-icon-left"></i>
+        <input type="text" id="marketplaceSearch" class="search-input" placeholder="Search by product name, course (e.g. CSE260, MATH101), keyword, or seller..." oninput="handleFilterChange()" autocomplete="off">
+        <button type="button" id="searchClearBtn" class="search-clear-btn" onclick="clearSearchInput()" title="Clear search">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
 
-            <div class="card-body">
-              <div>
-                {% if item.used_in_course %}
-                  <div class="card-course">
-                    <i class="ph ph-books"></i> {{ item.used_in_course }}
-                  </div>
-                {% endif %}
-                <h3 class="card-title">{{ item.product_name }}</h3>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
-                  <a href="{{ url_for('profile', student_id=item.seller_id) }}" style="color: #38bdf8; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="Click to view full seller profile">
-                    <i class="ph-bold ph-user-circle"></i> {{ item.seller_name or 'BRACU Peer' }}
-                  </a>
-                  <a href="{{ url_for('chat_view') }}?user={{ item.seller_id }}&product_id={{ item.product_id }}" style="color: #cbd5e1; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <i class="ph-bold ph-chat-teardrop"></i> Chat
-                  </a>
-                </div>
-                <p class="card-desc">{{ item.description or 'Lightly used, verified BRACU student item.' }}</p>
-              </div>
-
-              <div>
-                <div class="card-price-row">
-                  <div>
-                    <span style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Price</span>
-                    <div class="price-num">৳{{ item.selling_price }}</div>
-                  </div>
-                  {% if item.recommended_price %}
-                    <div class="rec-price">
-                      REC: ৳{{ item.recommended_price }}
-                    </div>
-                  {% endif %}
-                </div>
-
-                <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 13px; padding: 10px; background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
-                  <i class="ph-bold ph-lightning"></i> Buy & View Details
-                </a>
-              </div>
-            </div>
+      <div class="filters-row">
+        <div class="filter-controls-left">
+          <!-- Course Filter Dropdown -->
+          <div class="filter-label-group">
+            <label for="courseFilterSelect" class="filter-label">
+              <i class="ph-bold ph-graduation-cap" style="color: #38bdf8;"></i> Course:
+            </label>
+            <select id="courseFilterSelect" class="filter-select" onchange="handleFilterChange()">
+              <option value="">All Courses</option>
+              {% for crs in courses %}
+              <option value="{{ crs }}">{{ crs }}</option>
+              {% endfor %}
+            </select>
           </div>
+
+          <!-- Price Range Filter Dropdown -->
+          <div class="filter-label-group">
+            <label for="priceFilterSelect" class="filter-label">
+              <i class="ph-bold ph-currency-circle-dollar" style="color: #34d399;"></i> Price:
+            </label>
+            <select id="priceFilterSelect" class="filter-select" onchange="handleFilterChange()">
+              <option value="">Any Price</option>
+              <option value="under_500">Under ৳500</option>
+              <option value="500_1500">৳500 - ৳1,500</option>
+              <option value="1500_5000">৳1,500 - ৳5,000</option>
+              <option value="over_5000">Above ৳5,000</option>
+            </select>
+          </div>
+
+          <!-- Availability Status Filter -->
+          <div class="filter-label-group">
+            <label for="statusFilterSelect" class="filter-label">
+              <i class="ph-bold ph-funnel" style="color: #fbbf24;"></i> Status:
+            </label>
+            <select id="statusFilterSelect" class="filter-select" onchange="handleFilterChange()">
+              <option value="all" selected>All Items</option>
+              <option value="available">Available Only</option>
+              <option value="sold">Recently Sold Archive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sort Filter Dropdown -->
+        <div class="filter-label-group">
+          <label for="sortFilterSelect" class="filter-label">
+            <i class="ph-bold ph-sort-ascending" style="color: #a855f7;"></i> Sort:
+          </label>
+          <select id="sortFilterSelect" class="filter-select" onchange="handleFilterChange()">
+            <option value="newest">Newest First</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="name_asc">Name: A to Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Category Quick Filter Chips -->
+      <div class="category-pills" id="categoryPills">
+        <button type="button" class="category-pill active" data-category="" onclick="selectCategoryPill('', this)">
+          <i class="ph-bold ph-squares-four"></i> All Categories
+        </button>
+        {% for cat in categories %}
+        <button type="button" class="category-pill" data-category="{{ cat }}" onclick="selectCategoryPill('{{ cat }}', this)">
+          {{ cat }}
+        </button>
         {% endfor %}
       </div>
-    {% else %}
-      <div style="text-align: center; padding: 60px 20px; background: rgba(15, 23, 42, 0.6); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08);">
-        <p style="color: #94a3b8; margin-bottom: 16px;">No items currently listed.</p>
+
+      <!-- Stats Bar & Reset Filters Button -->
+      <div class="filter-stats-bar">
+        <div>
+          Showing <strong id="filterMatchCount" style="color: #34d399;">{{ available_products|length if available_products is defined else (products|length if products is defined else 0) }}</strong> product(s) matching criteria
+        </div>
+        <button type="button" id="resetFiltersBtn" class="filter-reset-btn" onclick="resetAllFilters()" style="display: none;">
+          <i class="ph-bold ph-arrow-counter-clockwise"></i> Clear Filters
+        </button>
       </div>
-    {% endif %}
+    </section>
+
+    <!-- Empty Search Results Message Box -->
+    <div id="noResultsState" class="no-results-box" style="display: none;">
+      <i class="ph-bold ph-magnifying-glass" style="font-size: 38px; color: #64748b; margin-bottom: 12px; display: block;"></i>
+      <h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 6px;">No products match your search or filters</h3>
+      <p style="color: #94a3b8; font-size: 14px; margin-bottom: 18px;">Try searching for a different course code, category, or clear your filters to view all campus items.</p>
+      <button type="button" class="btn btn-outline" onclick="resetAllFilters()">
+        <i class="ph-bold ph-arrow-counter-clockwise"></i> Clear All Filters
+      </button>
+    </div>
+
+    <!-- Section 1: Available Items on Campus -->
+    <section class="market-section" id="availableProductsSection">
+      <div class="market-section-header">
+        <div>
+          <h2 class="market-section-title">
+            <i class="ph-bold ph-storefront" style="color: #34d399;"></i>
+            Available Items
+            <span class="section-badge-pill">{{ available_products|length if available_products is defined else (products|length if products is defined else 0) }} Active</span>
+          </h2>
+          <p class="market-section-desc">Current listings available for immediate campus meetup and digital checkout.</p>
+        </div>
+      </div>
+
+      {% set avail_list = available_products if available_products is defined else products %}
+      {% if avail_list and avail_list|length > 0 %}
+        <div class="products-grid" id="availableProductsGrid">
+          {% for item in avail_list %}
+            <div class="product-card" data-name="{{ item.product_name|lower }}" data-category="{{ (item.category or '')|lower }}" data-course="{{ (item.used_in_course or '')|lower }}" data-price="{{ item.selling_price }}" data-seller="{{ (item.seller_name or '')|lower }}" data-desc="{{ (item.description or '')|lower }}" data-status="available" data-id="{{ item.product_id }}">
+              <div class="card-img-wrapper">
+                <img src="{{ item.photo or 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' }}" alt="{{ item.product_name }}" class="card-img">
+                <span class="badge-cat">{{ item.category or 'Academic' }}</span>
+                {% if item.age %}
+                  <span class="badge-age">Age: {{ item.age }}</span>
+                {% endif %}
+                <button type="button" class="card-wishlist-btn {% if wishlisted_pids is defined and item.product_id in wishlisted_pids %}active{% endif %}" onclick="toggleWishlistAjax({{ item.product_id }}, this)" title="Save to Wishlist">
+                  <i class="ph-{% if wishlisted_pids is defined and item.product_id in wishlisted_pids %}fill{% else %}bold{% endif %} ph-heart"></i>
+                </button>
+              </div>
+
+              <div class="card-body">
+                <div>
+                  {% if item.used_in_course %}
+                    <div class="card-course">
+                      <i class="ph ph-books"></i> {{ item.used_in_course }}
+                    </div>
+                  {% endif %}
+                  <h3 class="card-title">{{ item.product_name }}</h3>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
+                    <a href="{{ url_for('profile', student_id=item.seller_id) }}" style="color: #38bdf8; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;" title="Click to view full seller profile">
+                      <i class="ph-bold ph-user-circle"></i> {{ item.seller_name or 'BRACU Peer' }}
+                    </a>
+                    <a href="{{ url_for('chat_view') }}?user={{ item.seller_id }}&product_id={{ item.product_id }}" style="color: #cbd5e1; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                      <i class="ph-bold ph-chat-teardrop"></i> Chat
+                    </a>
+                  </div>
+                  <p class="card-desc">{{ item.description or 'Lightly used, verified BRACU student item.' }}</p>
+                </div>
+
+                <div>
+                  <div class="card-price-row">
+                    <div>
+                      <span style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Price</span>
+                      <div class="price-num">৳{{ item.selling_price }}</div>
+                    </div>
+                    {% if item.recommended_price %}
+                      <div class="rec-price">
+                        REC: ৳{{ item.recommended_price }}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 13px; padding: 10px; background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+                    <i class="ph-bold ph-lightning"></i> Buy & View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 40px 20px; background: rgba(15, 23, 42, 0.6); border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.12);">
+          <i class="ph-bold ph-package" style="font-size: 32px; color: #64748b; margin-bottom: 8px; display: block;"></i>
+          <p style="color: #94a3b8; font-size: 14px;">No active items listed right now. Check back soon or list an item!</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Section 2: Recently Sold Items (Archived Listings) -->
+    <section class="market-section" id="soldProductsSection" style="margin-top: 56px;">
+      <div class="market-section-header">
+        <div>
+          <h2 class="market-section-title">
+            <i class="ph-bold ph-check-circle" style="color: #f43f5e;"></i>
+            Recently Sold Items
+            <span class="section-badge-pill section-badge-rose">{{ sold_products|length if sold_products is defined else 0 }} Sold</span>
+          </h2>
+          <p class="market-section-desc">Items successfully bought on CampusCycle. Missed one? Add it to your Wishlist to get notified when another peer lists a similar item!</p>
+        </div>
+      </div>
+
+      {% if sold_products and sold_products|length > 0 %}
+        <div class="products-grid" id="soldProductsGrid">
+          {% for item in sold_products %}
+            <div class="product-card sold-card" data-name="{{ item.product_name|lower }}" data-category="{{ (item.category or '')|lower }}" data-course="{{ (item.used_in_course or '')|lower }}" data-price="{{ item.selling_price }}" data-seller="{{ (item.seller_name or '')|lower }}" data-desc="{{ (item.description or '')|lower }}" data-status="sold" data-id="{{ item.product_id }}">
+              <div class="card-img-wrapper">
+                <img src="{{ item.photo or 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' }}" alt="{{ item.product_name }}" class="card-img">
+                <span class="badge-sold">
+                  <i class="ph-bold ph-seal-check"></i> SOLD
+                </span>
+                {% if item.sold_date %}
+                  <span class="badge-sold-date">Sold: {{ item.sold_date }}</span>
+                {% endif %}
+                <button type="button" class="card-wishlist-btn {% if wishlisted_pids is defined and item.product_id in wishlisted_pids %}active{% endif %}" onclick="toggleWishlistAjax({{ item.product_id }}, this)" title="Add Sold Item to Wishlist">
+                  <i class="ph-{% if wishlisted_pids is defined and item.product_id in wishlisted_pids %}fill{% else %}bold{% endif %} ph-heart"></i>
+                </button>
+              </div>
+
+              <div class="card-body">
+                <div>
+                  {% if item.used_in_course %}
+                    <div class="card-course" style="color: #cbd5e1;">
+                      <i class="ph ph-books"></i> {{ item.used_in_course }}
+                    </div>
+                  {% endif %}
+                  <h3 class="card-title" style="color: #e2e8f0;">{{ item.product_name }}</h3>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
+                    <span style="color: #94a3b8; display: inline-flex; align-items: center; gap: 4px;">
+                      <i class="ph-bold ph-user"></i> Sold by {{ item.seller_name or 'BRACU Peer' }}
+                    </span>
+                    <span style="color: #f43f5e; font-weight: 700; font-size: 11px; background: rgba(244, 63, 94, 0.1); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(244, 63, 94, 0.2);">
+                      Sold Out
+                    </span>
+                  </div>
+                  <p class="card-desc">{{ item.description or 'Verified BRACU student item.' }}</p>
+                </div>
+
+                <div>
+                  <div class="card-price-row">
+                    <div>
+                      <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">Sold Price</span>
+                      <div class="price-num" style="color: #94a3b8; text-decoration: line-through;">৳{{ item.selling_price }}</div>
+                    </div>
+                    <span style="font-size: 11px; color: #38bdf8; font-weight: 700;">
+                      <i class="ph-bold ph-bell-simple-ringing"></i> Wish to track
+                    </span>
+                  </div>
+
+                  <div class="sold-action-grid">
+                    <button type="button" class="btn btn-outline" onclick="toggleWishlistAjax({{ item.product_id }}, this)" style="justify-content: center; font-size: 12px; padding: 9px; background: rgba(244, 63, 94, 0.12); color: #fda4af; border-color: rgba(244, 63, 94, 0.3);">
+                      <i class="ph-bold ph-heart"></i> Add to Wishlist
+                    </button>
+                    <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="btn btn-outline" style="justify-content: center; font-size: 12px; padding: 9px; background: rgba(255, 255, 255, 0.05); color: #cbd5e1;">
+                      <i class="ph-bold ph-info"></i> Details
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 36px 20px; background: rgba(15, 23, 42, 0.4); border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.08);">
+          <p style="color: #64748b; font-size: 13px;">No items marked as sold yet. Once orders are verified, sold items will appear here.</p>
+        </div>
+      {% endif %}
+    </section>
   </main>
 
   <!-- Interactive Action Toast -->
@@ -432,6 +920,270 @@
   </footer>
 
   <script>
+    // --- Live Search & Filter Engine ---
+    let currentSelectedCategory = '';
+
+    function selectCategoryPill(category, btnEl) {
+      currentSelectedCategory = category;
+      document.querySelectorAll('#categoryPills .category-pill').forEach(btn => btn.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      handleFilterChange();
+    }
+
+    function clearSearchInput() {
+      const searchInput = document.getElementById('marketplaceSearch');
+      if (searchInput) searchInput.value = '';
+      handleFilterChange();
+    }
+
+    function resetAllFilters() {
+      const searchInput = document.getElementById('marketplaceSearch');
+      const courseSelect = document.getElementById('courseFilterSelect');
+      const priceSelect = document.getElementById('priceFilterSelect');
+      const statusSelect = document.getElementById('statusFilterSelect');
+      const sortSelect = document.getElementById('sortFilterSelect');
+
+      if (searchInput) searchInput.value = '';
+      if (courseSelect) courseSelect.value = '';
+      if (priceSelect) priceSelect.value = '';
+      if (statusSelect) statusSelect.value = 'all';
+      if (sortSelect) sortSelect.value = 'newest';
+
+      currentSelectedCategory = '';
+      document.querySelectorAll('#categoryPills .category-pill').forEach((btn, idx) => {
+        if (idx === 0) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      handleFilterChange();
+    }
+
+    function handleFilterChange() {
+      const searchInput = document.getElementById('marketplaceSearch');
+      const courseSelect = document.getElementById('courseFilterSelect');
+      const priceSelect = document.getElementById('priceFilterSelect');
+      const statusSelect = document.getElementById('statusFilterSelect');
+      const sortSelect = document.getElementById('sortFilterSelect');
+      const clearBtn = document.getElementById('searchClearBtn');
+      const resetBtn = document.getElementById('resetFiltersBtn');
+      const matchCountEl = document.getElementById('filterMatchCount');
+      const noResultsBox = document.getElementById('noResultsState');
+
+      const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const courseVal = (courseSelect ? courseSelect.value : '').toLowerCase().trim();
+      const priceVal = priceSelect ? priceSelect.value : '';
+      const statusVal = statusSelect ? statusSelect.value : 'all';
+      const sortVal = sortSelect ? sortSelect.value : 'newest';
+      const categoryVal = currentSelectedCategory.toLowerCase().trim();
+
+      // Clear button visibility
+      if (clearBtn) {
+        clearBtn.style.display = query ? 'flex' : 'none';
+      }
+
+      // Check if any filter is active
+      const hasActiveFilter = query || courseVal || priceVal || categoryVal || (statusVal !== 'all') || (sortVal !== 'newest');
+      if (resetBtn) {
+        resetBtn.style.display = hasActiveFilter ? 'inline-flex' : 'none';
+      }
+
+      let totalVisible = 0;
+      let availVisible = 0;
+      let soldVisible = 0;
+
+      // Filter Available Cards
+      const availCards = Array.from(document.querySelectorAll('#availableProductsGrid .product-card'));
+      availCards.forEach(card => {
+        const matches = checkCardMatch(card, query, categoryVal, courseVal, priceVal, statusVal, 'available');
+        if (matches) {
+          card.style.display = 'flex';
+          availVisible++;
+          totalVisible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Filter Sold Cards
+      const soldCards = Array.from(document.querySelectorAll('#soldProductsGrid .product-card'));
+      soldCards.forEach(card => {
+        const matches = checkCardMatch(card, query, categoryVal, courseVal, priceVal, statusVal, 'sold');
+        if (matches) {
+          card.style.display = 'flex';
+          soldVisible++;
+          totalVisible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Sort visible cards
+      sortCardsContainer('#availableProductsGrid', sortVal);
+      sortCardsContainer('#soldProductsGrid', sortVal);
+
+      // Toggle Section Visibility according to Status filter
+      const availSection = document.getElementById('availableProductsSection');
+      const soldSection = document.getElementById('soldProductsSection');
+
+      if (availSection) {
+        if (statusVal === 'sold' || (availVisible === 0 && totalVisible > 0)) {
+          availSection.style.display = 'none';
+        } else {
+          availSection.style.display = 'block';
+        }
+      }
+
+      if (soldSection) {
+        if (statusVal === 'available' || (soldVisible === 0 && totalVisible > 0)) {
+          soldSection.style.display = 'none';
+        } else {
+          soldSection.style.display = 'block';
+        }
+      }
+
+      // Update match count badge
+      if (matchCountEl) {
+        matchCountEl.innerText = totalVisible;
+      }
+
+      // Toggle No Results State
+      if (noResultsBox) {
+        noResultsBox.style.display = totalVisible === 0 ? 'block' : 'none';
+      }
+    }
+
+    function checkCardMatch(card, query, category, course, priceRange, statusFilter, cardStatus) {
+      if (statusFilter !== 'all' && statusFilter !== cardStatus) {
+        return false;
+      }
+
+      const name = card.getAttribute('data-name') || '';
+      const cat = card.getAttribute('data-category') || '';
+      const crs = card.getAttribute('data-course') || '';
+      const desc = card.getAttribute('data-desc') || '';
+      const seller = card.getAttribute('data-seller') || '';
+      const price = parseFloat(card.getAttribute('data-price') || 0);
+
+      // Search Query Match
+      if (query) {
+        const searchTarget = `${name} ${crs} ${cat} ${desc} ${seller}`;
+        if (!searchTarget.includes(query)) {
+          return false;
+        }
+      }
+
+      // Category Match
+      if (category && cat !== category) {
+        return false;
+      }
+
+      // Course Match
+      if (course) {
+        if (!crs.includes(course)) {
+          return false;
+        }
+      }
+
+      // Price Range Match
+      if (priceRange) {
+        if (priceRange === 'under_500' && price >= 500) return false;
+        if (priceRange === '500_1500' && (price < 500 || price > 1500)) return false;
+        if (priceRange === '1500_5000' && (price < 1500 || price > 5000)) return false;
+        if (priceRange === 'over_5000' && price <= 5000) return false;
+      }
+
+      return true;
+    }
+
+    function sortCardsContainer(containerSelector, sortVal) {
+      const container = document.querySelector(containerSelector);
+      if (!container) return;
+
+      const cards = Array.from(container.children);
+      cards.sort((a, b) => {
+        const priceA = parseFloat(a.getAttribute('data-price') || 0);
+        const priceB = parseFloat(b.getAttribute('data-price') || 0);
+        const idA = parseInt(a.getAttribute('data-id') || 0);
+        const idB = parseInt(b.getAttribute('data-id') || 0);
+        const nameA = (a.getAttribute('data-name') || '').trim();
+        const nameB = (b.getAttribute('data-name') || '').trim();
+
+        if (sortVal === 'price_low') {
+          return priceA - priceB;
+        } else if (sortVal === 'price_high') {
+          return priceB - priceA;
+        } else if (sortVal === 'name_asc') {
+          return nameA.localeCompare(nameB);
+        } else {
+          // Default: newest first by ID
+          return idB - idA;
+        }
+      });
+
+      cards.forEach(card => container.appendChild(card));
+    }
+
+    // Initialize counts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      handleFilterChange();
+    });
+    function showToastMessage(iconClass, iconColor, title, message) {
+      const toast = document.getElementById('actionToast');
+      const icon = document.getElementById('toastIcon');
+      const titleEl = document.getElementById('toastTitle');
+      const bodyEl = document.getElementById('toastBody');
+
+      if (icon) {
+        icon.className = 'ph ' + iconClass;
+        icon.style.color = iconColor;
+      }
+      if (titleEl) titleEl.innerText = title;
+      if (bodyEl) bodyEl.innerText = message;
+
+      if (toast) {
+        toast.style.display = 'flex';
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, 3800);
+      }
+    }
+
+    async function toggleWishlistAjax(productId, btnEl) {
+      try {
+        const res = await fetch('/wishlist/add/' + productId, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        if (data.success) {
+          if (btnEl) {
+            btnEl.classList.add('active');
+            const icon = btnEl.querySelector('i');
+            if (icon) {
+              icon.className = 'ph-fill ph-heart';
+            }
+            if (btnEl.tagName === 'BUTTON' && btnEl.innerText.includes('Add')) {
+              btnEl.innerHTML = '<i class="ph-fill ph-check"></i> In Wishlist';
+              btnEl.style.color = '#34d399';
+              btnEl.style.borderColor = '#34d399';
+            }
+          let toastMsg = data.message || 'Added to your wishlist!';
+          if (data.course_prefix && data.matched_count !== undefined) {
+            toastMsg = `Added to Wishlist! Found ${data.matched_count} matching recommendation(s) for course prefix '${data.course_prefix}'.`;
+          }
+          showToastMessage('ph-fill ph-heart', '#f43f5e', 'Wishlist Updated', toastMsg);
+        } else {
+          showToastMessage('ph-bold ph-info', '#fbbf24', 'Wishlist', data.message || 'Could not update wishlist.');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     function showCartFutureNotice() {
       const currentCount = document.getElementById('navCartCount') ? document.getElementById('navCartCount').innerText : '0';
       const toast = document.getElementById('actionToast');

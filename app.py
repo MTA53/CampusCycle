@@ -7,6 +7,7 @@ import os
 import random
 import json
 import string
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'campuscycle_secret_key_bracu_2026')
@@ -23,6 +24,32 @@ app.config['MYSQL_DB'] = 'campuscycle'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
+
+
+def ensure_db_schema():
+    """Ensures custom wishlist tables and necessary schema extensions exist."""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS wishlist_custom_item (
+                item_id INT AUTO_INCREMENT PRIMARY KEY,
+                wishlist_id INT NOT NULL,
+                student_id VARCHAR(50) NOT NULL,
+                item_name VARCHAR(150) NOT NULL,
+                category VARCHAR(50),
+                target_price DECIMAL(10,2) NULL,
+                used_in_course VARCHAR(100) NULL,
+                notes TEXT NULL,
+                status VARCHAR(20) DEFAULT 'looking',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX (student_id),
+                INDEX (wishlist_id)
+            )
+        """)
+        mysql.connection.commit()
+        cur.close()
+    except Exception:
+        pass
 
 
 def create_digital_receipt(order_id, buyer_id, buyer_name, amount, payment_method, account_number, trx_id, delivery_place, items):
@@ -98,6 +125,23 @@ def compute_product_age(purchase_date):
     return f"{years} year{'s' if years != 1 else ''} old"
 
 
+def extract_course_prefixes(course_str):
+    """
+    Extracts 3-letter uppercase departmental course prefixes from a course string.
+    Handles single courses ('CSE110', 'CSE 110') and lists ('CSE260, CSE250; EEE241').
+    Returns a set of 3-letter uppercase prefixes, e.g. {'CSE', 'EEE'}.
+    """
+    if not course_str:
+        return set()
+    prefixes = set()
+    tokens = re.split(r'[,;/&+]|\band\b', str(course_str), flags=re.IGNORECASE)
+    for token in tokens:
+        letters = re.sub(r'[^a-zA-Z]', '', token).upper()
+        if len(letters) >= 3:
+            prefixes.add(letters[:3])
+    return prefixes
+
+
 def compute_recommended_price(selling_price, category=None):
     """Calculates Derived Attribute: Recommended Price based on category & fair market discount."""
     try:
@@ -134,10 +178,11 @@ def get_cart_count(student_id):
 
 
 def get_wishlist_count(student_id):
-    """Returns the total number of products saved in student's wishlist."""
+    """Returns the total number of products and custom requests saved in student's wishlist."""
     if not student_id:
         return 0
     try:
+        ensure_db_schema()
         cur = mysql.connection.cursor()
         cur.execute("""
             SELECT COUNT(i.product_id) as count
@@ -146,8 +191,22 @@ def get_wishlist_count(student_id):
             WHERE w.student_id = %s
         """, (student_id,))
         row = cur.fetchone()
+        count = int(row['count']) if row and row['count'] is not None else 0
+
+        try:
+            cur.execute("""
+                SELECT COUNT(item_id) as count
+                FROM wishlist_custom_item
+                WHERE student_id = %s
+            """, (student_id,))
+            c_row = cur.fetchone()
+            if c_row and c_row['count'] is not None:
+                count += int(c_row['count'])
+        except Exception:
+            pass
+
         cur.close()
-        return int(row['count']) if row and row['count'] is not None else 0
+        return count
     except Exception:
         return 0
 
@@ -502,6 +561,7 @@ def marketplace():
     student_id = session.get('student_id')
     cur = mysql.connection.cursor()
 
+    # Active / Available items
     cur.execute("""
         SELECT p.product_id, p.product_name, p.category, p.description,
                p.selling_price, p.recommended_price, p.used_in_course,
@@ -510,18 +570,77 @@ def marketplace():
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM product p
         LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE p.sold_date IS NULL
         ORDER BY p.product_id DESC
     """)
-    products = cur.fetchall() or []
+    available_products = cur.fetchall() or []
 
-    for p in products:
+    # Recently Sold items
+    cur.execute("""
+        SELECT p.product_id, p.product_name, p.category, p.description,
+               p.selling_price, p.recommended_price, p.used_in_course,
+               p.purchase_date, p.sold_date, p.student_id AS seller_id,
+               u.name AS seller_name,
+               (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
+        FROM product p
+        LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE p.sold_date IS NOT NULL
+        ORDER BY p.sold_date DESC, p.product_id DESC
+    """)
+    sold_products = cur.fetchall() or []
+
+    for p in available_products:
         p['age'] = compute_product_age(p.get('purchase_date'))
+
+    for p in sold_products:
+        p['age'] = compute_product_age(p.get('purchase_date'))
+
+    wishlisted_pids = []
+    if student_id:
+        try:
+            cur.execute("""
+                SELECT i.product_id 
+                FROM includes i 
+                JOIN wishlist w ON i.wishlist_id = w.wishlist_id 
+                WHERE w.student_id = %s
+            """, (student_id,))
+            w_rows = cur.fetchall() or []
+            wishlisted_pids = [r['product_id'] for r in w_rows]
+        except Exception:
+            pass
+
+    # Extract distinct categories and courses for quick filters
+    all_categories = set(['Books', 'Electronics', 'Scientific Calculator', 'Lab Equipment', 'Stationery', 'Bicycles', 'Other'])
+    for p in available_products + sold_products:
+        if p.get('category') and p['category'].strip():
+            all_categories.add(p['category'].strip())
+
+    all_courses = set()
+    for p in available_products + sold_products:
+        raw_c = p.get('used_in_course') or ''
+        for c in raw_c.replace(';', ',').replace('/', ',').split(','):
+            c_clean = c.strip().upper()
+            if c_clean:
+                all_courses.add(c_clean)
+
+    sorted_categories = sorted(list(all_categories))
+    sorted_courses = sorted(list(all_courses))
 
     cur.close()
     cart_count = get_cart_count(student_id) if student_id else 0
     wishlist_count = get_wishlist_count(student_id) if student_id else 0
 
-    return render_template('marketplace.html', products=products, cart_count=cart_count, wishlist_count=wishlist_count)
+    return render_template(
+        'marketplace.html',
+        available_products=available_products,
+        sold_products=sold_products,
+        products=available_products,
+        wishlisted_pids=wishlisted_pids,
+        cart_count=cart_count,
+        wishlist_count=wishlist_count,
+        categories=sorted_categories,
+        courses=sorted_courses
+    )
 
 
 @app.route('/product/<int:product_id>')
@@ -576,6 +695,135 @@ def product_detail(product_id):
         product_age=product_age,
         cart_count=cart_count
     )
+
+
+def match_and_notify_wishlists(cur, seller_id, seller_name, product_id, product_name, category, used_in_course, selling_price):
+    """
+    Compares newly uploaded product with all students' permanent wishlists.
+    Matches across multiple courses (e.g. CSE260 in CSE260, CSE250, CSE251)
+    and keywords (e.g. 'Jump Wires'), sending instant notifications to students.
+    """
+    if not product_name:
+        return
+
+    # Normalize seller courses and extract 3-letter departmental course prefixes
+    seller_courses = set([c.strip().upper() for c in (used_in_course or '').replace(';', ',').replace('/', ',').split(',') if c.strip()])
+    seller_prefixes = extract_course_prefixes(used_in_course)
+    
+    # Tokenize product name into clean keywords
+    seller_tokens = set([t.lower() for t in product_name.replace('-', ' ').replace('/', ' ').replace('(', ' ').replace(')', ' ').split() if len(t) >= 3])
+
+    notified_students = set()
+
+    # 1. Compare with Custom Wishlist Requests (wishlist_custom_item)
+    try:
+        ensure_db_schema()
+        cur.execute("""
+            SELECT item_id, wishlist_id, student_id, item_name, category, used_in_course, target_price
+            FROM wishlist_custom_item
+            WHERE student_id != %s
+        """, (seller_id,))
+        custom_wishes = cur.fetchall() or []
+
+        for wish in custom_wishes:
+            st_id = wish['student_id']
+            if st_id in notified_students:
+                continue
+
+            wish_courses = set([c.strip().upper() for c in (wish.get('used_in_course') or '').replace(';', ',').replace('/', ',').split(',') if c.strip()])
+            wish_prefixes = extract_course_prefixes(wish.get('used_in_course'))
+            wish_name = (wish.get('item_name') or '').strip().lower()
+            wish_tokens = set([t for t in wish_name.replace('-', ' ').replace('/', ' ').replace('(', ' ').replace(')', ' ').split() if len(t) >= 3])
+
+            # Check 1st 3 letters course prefix match (e.g. CSE matching in CSE110, CSE220, CSE260)
+            prefix_matched = bool(seller_prefixes and wish_prefixes and (seller_prefixes & wish_prefixes))
+            matched_prefixes_str = ", ".join(sorted(seller_prefixes & wish_prefixes)) if prefix_matched else ""
+
+            # Check exact course overlap as well
+            exact_course_matched = bool(seller_courses and wish_courses and (seller_courses & wish_courses))
+
+            # Check title similarity / keyword overlap
+            name_matched = False
+            if wish_name and (wish_name in product_name.lower() or product_name.lower() in wish_name):
+                name_matched = True
+            elif wish_tokens and seller_tokens and (wish_tokens & seller_tokens):
+                name_matched = True
+
+            category_matched = bool(category and wish.get('category') and category.lower() == wish['category'].lower())
+
+            if prefix_matched or exact_course_matched or name_matched or (prefix_matched and category_matched):
+                match_reason = ""
+                if prefix_matched and name_matched:
+                    match_reason = f"matching '{wish['item_name']}' for course prefix {matched_prefixes_str}"
+                elif prefix_matched:
+                    match_reason = f"recommended for course prefix {matched_prefixes_str} ({used_in_course}) which you wishlisted"
+                elif name_matched:
+                    match_reason = f"matching your wishlist item '{wish['item_name']}'"
+                elif exact_course_matched:
+                    match_reason = f"listed for course {used_in_course} which you requested"
+
+                notif_text = f"⚡ Course Recommendation Alert: A peer just listed '{product_name}' (৳{selling_price:.0f}) {match_reason}!"
+
+                try:
+                    cur.execute("""
+                        INSERT INTO notification 
+                        (buyer_notification, user_notification, text, notification_type, notification_status)
+                        VALUES (%s, %s, %s, 'wishlist_match', 'unread')
+                    """, (st_id, seller_id, notif_text))
+                    notified_students.add(st_id)
+                except Exception:
+                    pass
+    except Exception as e:
+        print("Error matching custom wishlists:", e)
+
+    # 2. Compare with Standard Saved Wishlist Items (includes + product)
+    try:
+        cur.execute("""
+            SELECT DISTINCT w.student_id, w.wishlist_id, p.product_name, p.used_in_course, p.category
+            FROM wishlist w
+            JOIN includes i ON w.wishlist_id = i.wishlist_id
+            JOIN product p ON i.product_id = p.product_id
+            WHERE w.student_id != %s
+        """, (seller_id,))
+        standard_wishes = cur.fetchall() or []
+
+        for sw in standard_wishes:
+            st_id = sw['student_id']
+            if st_id in notified_students:
+                continue
+
+            sw_courses = set([c.strip().upper() for c in (sw.get('used_in_course') or '').replace(';', ',').replace('/', ',').split(',') if c.strip()])
+            sw_prefixes = extract_course_prefixes(sw.get('used_in_course'))
+            sw_name = (sw.get('product_name') or '').strip().lower()
+            sw_tokens = set([t for t in sw_name.replace('-', ' ').replace('/', ' ').split() if len(t) >= 3])
+
+            # Check 1st 3 letters course prefix match
+            prefix_matched = bool(seller_prefixes and sw_prefixes and (seller_prefixes & sw_prefixes))
+            matched_prefixes_str = ", ".join(sorted(seller_prefixes & sw_prefixes)) if prefix_matched else ""
+
+            course_matched = bool(seller_courses and sw_courses and (seller_courses & sw_courses))
+            name_matched = bool(sw_name in product_name.lower() or product_name.lower() in sw_name or (sw_tokens and seller_tokens and (sw_tokens & seller_tokens)))
+
+            if prefix_matched or course_matched or name_matched:
+                if prefix_matched:
+                    reason = f"matching your wishlisted {matched_prefixes_str} courses"
+                elif used_in_course:
+                    reason = f"for {used_in_course}"
+                else:
+                    reason = "matching your saved items"
+
+                notif_text = f"⚡ Course Recommendation Match: '{product_name}' (৳{selling_price:.0f}) was just listed by {seller_name or 'a peer'} {reason}!"
+                try:
+                    cur.execute("""
+                        INSERT INTO notification 
+                        (buyer_notification, user_notification, wishlist_id, text, notification_type, notification_status)
+                        VALUES (%s, %s, %s, %s, 'wishlist_match', 'unread')
+                    """, (st_id, seller_id, sw.get('wishlist_id'), notif_text))
+                    notified_students.add(st_id)
+                except Exception:
+                    pass
+    except Exception as e:
+        print("Error matching standard wishlists:", e)
 
 
 @app.route('/sell', methods=['GET', 'POST'])
@@ -678,37 +926,13 @@ def sell_product():
         except Exception:
             pass
 
-        # Trigger instant notifications to students who wishlisted items in this course, category, or product name
-        if used_in_course or category or product_name:
-            try:
-                search_word = product_name.split()[0] if product_name else ''
-                cur.execute("""
-                    SELECT DISTINCT w.student_id, w.wishlist_id, u.name AS seller_name
-                    FROM wishlist w
-                    JOIN includes i ON w.wishlist_id = i.wishlist_id
-                    JOIN product p ON i.product_id = p.product_id
-                    JOIN user u ON u.student_id = %s
-                    WHERE w.student_id != %s
-                      AND (
-                          (p.used_in_course IS NOT NULL AND p.used_in_course != '' AND LOWER(p.used_in_course) = LOWER(%s))
-                          OR (p.category IS NOT NULL AND LOWER(p.category) = LOWER(%s))
-                          OR (p.product_name IS NOT NULL AND LOWER(p.product_name) LIKE LOWER(%s))
-                      )
-                """, (student_id, student_id, used_in_course, category, f"%{search_word}%"))
-                matching_users = cur.fetchall()
-                for mu in matching_users:
-                    notif_text = f"⚡ Wishlist Match: '{product_name}'"
-                    if used_in_course:
-                        notif_text += f" (used in {used_in_course})"
-                    notif_text += f" was just posted by {mu.get('seller_name', 'a peer')} for ৳{selling_price:.0f}!"
-                    
-                    cur.execute("""
-                        INSERT INTO notification 
-                        (buyer_notification, user_notification, wishlist_id, text, notification_type, notification_status)
-                        VALUES (%s, %s, %s, %s, 'wishlist_match', 'unread')
-                    """, (mu['student_id'], student_id, mu['wishlist_id'], notif_text))
-            except Exception as e:
-                print("Error creating wishlist match notifications:", e)
+        # Fetch seller's name for friendly notifications
+        cur.execute("SELECT name FROM user WHERE student_id = %s", (student_id,))
+        seller_row = cur.fetchone()
+        seller_name = seller_row['name'] if seller_row else 'A peer'
+
+        # Automatic comparison of newly uploaded product with all students' wishlists
+        match_and_notify_wishlists(cur, student_id, seller_name, target_id, product_name, category, used_in_course, selling_price)
 
         mysql.connection.commit()
         cur.close()
@@ -750,14 +974,19 @@ def cart_view():
 
     total_bill = sum(float(item['selling_price'] or 0) for item in cart_items)
 
-    # Strict Course Code Recommendation Engine
+    # Course Code Recommendation Engine (1st 3 letters departmental prefix matching)
     cart_pids = [item['product_id'] for item in cart_items]
     tracked_courses = [item['used_in_course'].strip().upper() for item in cart_items if item.get('used_in_course') and item.get('used_in_course').strip()]
     tracked_courses = list(dict.fromkeys(tracked_courses))  # Unique list
+    cart_prefixes = set()
+    for c in tracked_courses:
+        cart_prefixes.update(extract_course_prefixes(c))
 
     recommendations = []
-    if tracked_courses:
-        format_strings = ','.join(['%s'] * len(tracked_courses))
+    if cart_prefixes:
+        pfx_clauses = ["UPPER(p.used_in_course) LIKE %s" for _ in cart_prefixes]
+        or_pfx = " OR ".join(pfx_clauses)
+        params = [f"%{pfx}%" for pfx in cart_prefixes]
         query = f"""
             SELECT p.product_id, p.product_name, p.category, p.selling_price, 
                    p.recommended_price, p.used_in_course, u.name as seller_name,
@@ -765,16 +994,19 @@ def cart_view():
             FROM product p
             LEFT JOIN user u ON p.student_id = u.student_id
             WHERE p.sold_date IS NULL
-              AND UPPER(TRIM(p.used_in_course)) IN ({format_strings})
+              AND ({or_pfx})
         """
-        params = list(tracked_courses)
         if cart_pids:
             p_format = ','.join(['%s'] * len(cart_pids))
             query += f" AND p.product_id NOT IN ({p_format})"
             params.extend(cart_pids)
-        query += " ORDER BY p.product_id DESC LIMIT 6"
+        query += " ORDER BY p.product_id DESC LIMIT 12"
         cur.execute(query, tuple(params))
-        recommendations = list(cur.fetchall() or [])
+        rows = list(cur.fetchall() or [])
+        for r in rows:
+            if extract_course_prefixes(r.get('used_in_course')) & cart_prefixes:
+                recommendations.append(r)
+        recommendations = recommendations[:6]
 
     cur.close()
 
@@ -799,6 +1031,14 @@ def add_to_cart_route(product_id):
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor()
+
+    cur.execute("SELECT sold_date, product_name FROM product WHERE product_id = %s", (product_id,))
+    p_check = cur.fetchone()
+    if p_check and p_check.get('sold_date'):
+        cur.close()
+        if is_ajax or request.method == 'POST':
+            return jsonify({'success': False, 'message': f"'{p_check.get('product_name', 'Item')}' has already been sold."}), 400
+        return redirect(url_for('marketplace'))
 
     cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
     user_cart = cur.fetchone()
@@ -878,7 +1118,7 @@ def checkout():
     cart_id = user_cart['cart_id']
 
     cur.execute("""
-        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name
+        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name, p.sold_date
         FROM added a 
         JOIN product p ON a.product_id = p.product_id 
         LEFT JOIN user u ON p.student_id = u.student_id
@@ -889,6 +1129,18 @@ def checkout():
     if not items:
         cur.close()
         return redirect(url_for('cart_view'))
+
+    # Filter out any already-sold items to ensure clean order processing
+    available_items = [i for i in items if not i.get('sold_date')]
+    sold_items = [i for i in items if i.get('sold_date')]
+    if sold_items:
+        for si in sold_items:
+            cur.execute("DELETE FROM added WHERE cart_id = %s AND product_id = %s", (cart_id, si['product_id']))
+        mysql.connection.commit()
+    if not available_items:
+        cur.close()
+        return redirect(url_for('cart_view'))
+    items = available_items
 
     total_bill = sum(float(i['selling_price'] or 0) for i in items)
     is_digital_paid = payment_method in ['bkash', 'nagad', 'rocket', 'card']
@@ -910,9 +1162,13 @@ def checkout():
 
     cur.execute("UPDATE cart SET order_id = %s, total_bill = %s WHERE cart_id = %s", (order_id, total_bill, cart_id))
 
-    # Mark items with order_id
+    # Mark items with order_id and sold_date
     for item in items:
-        cur.execute("UPDATE product SET order_id = %s WHERE product_id = %s", (order_id, item['product_id']))
+        cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, item['product_id']))
+        try:
+            cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (item['product_id'],))
+        except Exception:
+            pass
 
         # Send notification to seller
         seller_id = item.get('seller_id')
@@ -964,7 +1220,7 @@ def buy_now(product_id):
     cur = mysql.connection.cursor()
 
     cur.execute("""
-        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name
+        SELECT p.product_id, p.product_name, p.selling_price, p.student_id as seller_id, u.name as seller_name, p.sold_date
         FROM product p
         LEFT JOIN user u ON p.student_id = u.student_id
         WHERE p.product_id = %s
@@ -976,6 +1232,12 @@ def buy_now(product_id):
         if is_ajax:
             return jsonify({'success': False, 'message': 'Product not found.'}), 404
         return redirect(url_for('marketplace'))
+
+    if product.get('sold_date'):
+        cur.close()
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'This item has already been sold to another peer.'}), 400
+        return redirect(url_for('product_detail', product_id=product_id))
 
     if product['seller_id'] == student_id:
         cur.close()
@@ -1011,8 +1273,12 @@ def buy_now(product_id):
     receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, delivery_place, items_summary)
     cur.execute("UPDATE orders SET receipt = %s WHERE order_id = %s", (receipt_json, order_id))
 
-    # Mark product with order_id
-    cur.execute("UPDATE product SET order_id = %s WHERE product_id = %s", (order_id, product_id))
+    # Mark product with order_id and sold_date
+    cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, product_id))
+    try:
+        cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (product_id,))
+    except Exception:
+        pass
 
     # Notifications
     seller_id = product.get('seller_id')
@@ -1092,6 +1358,17 @@ def pay_order(order_id):
         SET payment_method = %s, receipt = %s, delivery_status = 'confirmed', buyer_confirmation = 1, confirmation = 1
         WHERE order_id = %s
     """, (payment_method, receipt_json, order_id))
+
+    cur.execute("UPDATE product SET sold_date = CURDATE() WHERE order_id = %s AND sold_date IS NULL", (order_id,))
+    try:
+        cur.execute("""
+            UPDATE product_date pd
+            JOIN product p ON pd.product_id = p.product_id
+            SET pd.sold = CURDATE()
+            WHERE p.order_id = %s AND pd.sold IS NULL
+        """, (order_id,))
+    except Exception:
+        pass
 
     # Notify sellers
     for r in order_rows:
@@ -1204,40 +1481,101 @@ def wishlist_view():
         WHERE i.wishlist_id = %s
         ORDER BY p.product_id DESC
     """, (wishlist_id,))
-    wishlist_items = cur.fetchall()
+    wishlist_items = cur.fetchall() or []
 
     wishlisted_product_ids = [item['product_id'] for item in wishlist_items]
-    wishlisted_courses = list(set([item['used_in_course'].strip().upper() for item in wishlist_items if item['used_in_course'] and item['used_in_course'].strip()]))
-    wishlisted_categories = list(set([item['category'].strip() for item in wishlist_items if item['category'] and item['category'].strip()]))
 
-    # 3. Intelligent Course & Related Recommendations
+    # 3. Fetch Custom Requested Wishlist Items (BEFORE computing recommendations, so course codes are captured!)
+    ensure_db_schema()
+    cur.execute("""
+        SELECT item_id, wishlist_id, student_id, item_name, category, 
+               target_price, used_in_course, notes, status, created_at
+        FROM wishlist_custom_item
+        WHERE student_id = %s OR wishlist_id = %s
+        ORDER BY item_id DESC
+    """, (student_id, wishlist_id))
+    custom_items = cur.fetchall() or []
+
+    # Track all course codes and 3-letter departmental course prefixes
+    tracked_courses_set = set()
+    wishlist_prefixes = set()
+
+    for item in wishlist_items:
+        raw_c = item.get('used_in_course') or ''
+        for c in raw_c.replace(';', ',').replace('/', ',').split(','):
+            c_clean = c.strip().upper()
+            if c_clean:
+                tracked_courses_set.add(c_clean)
+        wishlist_prefixes.update(extract_course_prefixes(raw_c))
+
+    # Gather all course codes and 3-letter departmental course prefixes from custom wish requests
+    for ci in custom_items:
+        raw_courses = ci.get('used_in_course') or ''
+        courses_list = [c.strip().upper() for c in raw_courses.replace(';', ',').replace('/', ',').split(',') if c.strip()]
+        for c_clean in courses_list:
+            tracked_courses_set.add(c_clean)
+        ci['courses_list'] = courses_list
+        ci_prefixes = extract_course_prefixes(raw_courses)
+        wishlist_prefixes.update(ci_prefixes)
+
+    wishlisted_courses = list(tracked_courses_set)
+
+    # 4. Intelligent Course & Marketplace Recommendations matching 1st 3 letters of course code
+    # Displayed in the main recommendations section for all tracked course codes from wishlist & custom requests
     recommendations = []
-    if wishlisted_courses:
-        format_strings = ','.join(['%s'] * len(wishlisted_courses))
+    if wishlist_prefixes:
+        pfx_clauses = ["UPPER(p.used_in_course) LIKE %s" for _ in wishlist_prefixes]
+        where_pfx = " OR ".join(pfx_clauses)
+        params = [f"%{pfx}%" for pfx in wishlist_prefixes]
+
         query = f"""
             SELECT DISTINCT p.product_id, p.product_name, p.category, p.description,
-                   p.selling_price, p.recommended_price, p.used_in_course,
+                   p.selling_price, p.recommended_price, p.used_in_course, p.student_id,
                    u.name AS seller_name, u.trust_score AS seller_trust_score,
-                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo,
-                   'Same Course: ' AS reason_type, p.used_in_course AS reason_value
+                   (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
             FROM product p
             JOIN user u ON p.student_id = u.student_id
             WHERE p.sold_date IS NULL
-              AND p.student_id != %s
-              AND UPPER(p.used_in_course) IN ({format_strings})
+              AND ({where_pfx})
         """
-        params = [student_id] + wishlisted_courses
+        params_list = list(params)
         if wishlisted_product_ids:
             p_format = ','.join(['%s'] * len(wishlisted_product_ids))
             query += f" AND p.product_id NOT IN ({p_format})"
-            params += wishlisted_product_ids
-        query += " ORDER BY p.product_id DESC LIMIT 8"
-        cur.execute(query, tuple(params))
-        recommendations = list(cur.fetchall())
+            params_list += wishlisted_product_ids
 
-    # Fallback or supplementary recommendations
-    if len(recommendations) < 4:
-        exclude_ids = wishlisted_product_ids + [r['product_id'] for r in recommendations]
+        # Prioritize listings from peer students, but also allow student's listings if testing locally
+        query += " ORDER BY (p.student_id != %s) DESC, p.product_id DESC LIMIT 24"
+        cur.execute(query, tuple(params_list + [student_id]))
+        candidate_rows = list(cur.fetchall() or [])
+
+        seen_pids = set()
+        for row in candidate_rows:
+            if row['product_id'] in seen_pids:
+                continue
+            row_pfxs = extract_course_prefixes(row.get('used_in_course'))
+            matching_pfxs = row_pfxs & wishlist_prefixes
+            if matching_pfxs:
+                pfx_matched = sorted(list(matching_pfxs))[0]
+                row['reason_type'] = "Course Match:"
+                row['reason_value'] = f"{pfx_matched} ({row.get('used_in_course')})"
+                row['matched_prefix'] = pfx_matched
+                recommendations.append(row)
+                seen_pids.add(row['product_id'])
+
+        if recommendations:
+            pfx_str = ", ".join(sorted(wishlist_prefixes))
+            rec_summary = f"Smart recommendations for {pfx_str}: " + ", ".join([r['product_name'] for r in recommendations[:4]])
+            try:
+                cur.execute("UPDATE wishlist SET recommendation = %s WHERE wishlist_id = %s", (rec_summary, wishlist_id))
+                mysql.connection.commit()
+                stored_recommendation = rec_summary
+            except Exception:
+                pass
+
+    # Fallback only if absolutely no course recommendations found
+    if not recommendations:
+        exclude_ids = wishlisted_product_ids
         fallback_query = """
             SELECT DISTINCT p.product_id, p.product_name, p.category, p.description,
                    p.selling_price, p.recommended_price, p.used_in_course,
@@ -1247,49 +1585,179 @@ def wishlist_view():
             FROM product p
             JOIN user u ON p.student_id = u.student_id
             WHERE p.sold_date IS NULL
-              AND p.student_id != %s
         """
-        params = [student_id]
+        params = []
         if exclude_ids:
             p_format = ','.join(['%s'] * len(exclude_ids))
             fallback_query += f" AND p.product_id NOT IN ({p_format})"
             params += exclude_ids
-        fallback_query += " ORDER BY p.product_id DESC LIMIT %s"
-        needed = 8 - len(recommendations)
-        params.append(needed)
+        fallback_query += " ORDER BY p.product_id DESC LIMIT 8"
         cur.execute(fallback_query, tuple(params))
-        recommendations.extend(cur.fetchall())
+        recommendations = list(cur.fetchall() or [])
 
-    # 4. Fetch Wishlist & Match Notifications for this student
+    # 5. Fetch Archived Sold Marketplace Products (for adding sold items to wishlist)
     cur.execute("""
-        SELECT n.n_id, n.text, n.notification_type, n.notification_status,
-               n.notification_date, n.user_notification AS sender_id,
-               u.name AS sender_name
-        FROM notification n
-        LEFT JOIN user u ON n.user_notification = u.student_id
-        WHERE n.buyer_notification = %s
-        ORDER BY n.notification_date DESC
-        LIMIT 15
-    """, (student_id,))
-    notifications = cur.fetchall()
+        SELECT p.product_id, p.product_name, p.category, p.selling_price, 
+               p.used_in_course, p.sold_date, u.name as seller_name,
+               (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
+        FROM product p
+        LEFT JOIN user u ON p.student_id = u.student_id
+        WHERE p.sold_date IS NOT NULL
+        ORDER BY p.sold_date DESC, p.product_id DESC
+        LIMIT 24
+    """)
+    archived_sold_products = cur.fetchall() or []
 
     cart_count = get_cart_count(student_id)
-    wishlist_count = len(wishlist_items)
-    unread_notifs = sum(1 for n in notifications if n['notification_status'] == 'unread')
+    wishlist_count = len(wishlist_items) + len(custom_items)
 
     cur.close()
 
     return render_template(
         'wishlist.html',
         wishlist_items=wishlist_items,
+        custom_items=custom_items,
+        archived_sold_products=archived_sold_products,
+        wishlisted_product_ids=wishlisted_product_ids,
         recommendations=recommendations,
-        notifications=notifications,
         wishlisted_courses=wishlisted_courses,
+        wishlist_prefixes=sorted(list(wishlist_prefixes)),
         cart_count=cart_count,
         wishlist_count=wishlist_count,
-        unread_notifs=unread_notifs,
         stored_recommendation=stored_recommendation
     )
+
+
+@app.route('/wishlist/add-custom', methods=['POST'])
+def add_custom_wishlist_item():
+    student_id = session.get('student_id')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    if not student_id:
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Please login first.', 'redirect': url_for('login')}), 401
+        return redirect(url_for('login'))
+
+    ensure_db_schema()
+
+    item_name = request.form.get('item_name', '').strip()
+    category = request.form.get('category', 'Books').strip()
+    raw_courses = request.form.get('used_in_course', '').strip()
+    courses_list = [c.strip().upper() for c in raw_courses.replace(';', ',').replace('/', ',').split(',') if c.strip()]
+    used_in_course = ", ".join(courses_list) if courses_list else None
+    target_price_raw = request.form.get('target_price', '').strip()
+    notes = request.form.get('notes', '').strip()
+
+    if not item_name:
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Please provide an item or product name.'}), 400
+        return redirect(url_for('wishlist_view'))
+
+    target_price = None
+    if target_price_raw:
+        try:
+            target_price = float(target_price_raw)
+        except ValueError:
+            target_price = None
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT wishlist_id FROM wishlist WHERE student_id = %s LIMIT 1", (student_id,))
+    w_row = cur.fetchone()
+    if not w_row:
+        cur.execute("INSERT INTO wishlist (student_id, recommendation) VALUES (%s, %s)", (student_id, ''))
+        mysql.connection.commit()
+        wishlist_id = cur.lastrowid
+    else:
+        wishlist_id = w_row['wishlist_id']
+
+    cur.execute("""
+        INSERT INTO wishlist_custom_item 
+        (wishlist_id, student_id, item_name, category, target_price, used_in_course, notes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (wishlist_id, student_id, item_name, category, target_price, used_in_course, notes))
+
+    # Check for immediate matching active marketplace products matching 1st 3 letters of course code
+    matching_listings = []
+    custom_prefixes = extract_course_prefixes(raw_courses)
+    if custom_prefixes:
+        try:
+            prefix_clauses = ["UPPER(p.used_in_course) LIKE %s" for _ in custom_prefixes]
+            or_pfx = " OR ".join(prefix_clauses)
+            params = [f"%{pfx}%" for pfx in custom_prefixes]
+            cur.execute(f"""
+                SELECT p.product_id, p.product_name, p.selling_price, p.used_in_course 
+                FROM product p
+                WHERE p.sold_date IS NULL AND ({or_pfx}) AND p.student_id != %s
+                ORDER BY p.product_id DESC
+                LIMIT 6
+            """, tuple(params + [student_id]))
+            for row in (cur.fetchall() or []):
+                if extract_course_prefixes(row.get('used_in_course')) & custom_prefixes:
+                    if not any(m['product_id'] == row['product_id'] for m in matching_listings):
+                        matching_listings.append(row)
+
+            # Fallback for single-user testing
+            if not matching_listings:
+                cur.execute(f"""
+                    SELECT p.product_id, p.product_name, p.selling_price, p.used_in_course 
+                    FROM product p
+                    WHERE p.sold_date IS NULL AND ({or_pfx})
+                    ORDER BY p.product_id DESC
+                    LIMIT 6
+                """, tuple(params))
+                for row in (cur.fetchall() or []):
+                    if extract_course_prefixes(row.get('used_in_course')) & custom_prefixes:
+                        if not any(m['product_id'] == row['product_id'] for m in matching_listings):
+                            matching_listings.append(row)
+        except Exception as e:
+            print(f"Error matching on add-custom: {e}")
+
+    mysql.connection.commit()
+    cur.close()
+
+    new_count = get_wishlist_count(student_id)
+
+    match_msg = f"Added '{item_name}' to your wishlist requests!"
+    if matching_listings:
+        pfx_label = ", ".join(sorted(custom_prefixes))
+        match_msg += f" We found {len(matching_listings)} matching {pfx_label} product(s) already in the marketplace!"
+
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'message': match_msg,
+            'wishlist_count': new_count,
+            'match_count': len(matching_listings)
+        })
+
+    return redirect(url_for('wishlist_view'))
+
+
+@app.route('/wishlist/remove-custom/<int:item_id>', methods=['GET', 'POST'])
+def remove_custom_wishlist_item(item_id):
+    student_id = session.get('student_id')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json
+    if not student_id:
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Please login first.'}), 401
+        return redirect(url_for('login'))
+
+    ensure_db_schema()
+
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM wishlist_custom_item WHERE item_id = %s AND student_id = %s", (item_id, student_id))
+    mysql.connection.commit()
+    cur.close()
+
+    new_count = get_wishlist_count(student_id)
+
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'message': 'Custom request removed from wishlist.',
+            'wishlist_count': new_count
+        })
+
+    return redirect(url_for('wishlist_view'))
 
 
 @app.route('/wishlist/add/<int:product_id>', methods=['GET', 'POST'])
@@ -1326,36 +1794,69 @@ def add_to_wishlist(product_id):
     if not already_included:
         cur.execute("INSERT INTO includes (wishlist_id, product_id) VALUES (%s, %s)", (wishlist_id, product_id))
 
-    # Fetch course-based recommendations for instant feedback
+    # Fetch course-based recommendations for instant feedback matching 1st 3 letters of course code
     course = product.get('used_in_course', '')
     course_recommendations = []
-    if course and course.strip():
-        cur.execute("""
+    course_prefixes = extract_course_prefixes(course)
+
+    if course_prefixes:
+        pfx_clauses = ["UPPER(p.used_in_course) LIKE %s" for _ in course_prefixes]
+        where_pfx = " OR ".join(pfx_clauses)
+        params = [f"%{pfx}%" for pfx in course_prefixes]
+
+        cur.execute(f"""
             SELECT p.product_id, p.product_name, p.category, p.selling_price, p.used_in_course,
                    (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
             FROM product p
             WHERE p.sold_date IS NULL
               AND p.student_id != %s
               AND p.product_id != %s
-              AND UPPER(p.used_in_course) = UPPER(%s)
-            LIMIT 4
-        """, (student_id, product_id, course.strip()))
-        course_recommendations = list(cur.fetchall())
+              AND ({where_pfx})
+            ORDER BY p.product_id DESC
+            LIMIT 8
+        """, tuple([student_id, product_id] + params))
+        rows = list(cur.fetchall() or [])
 
-        # Update wishlist recommendation text
-        rec_text = f"Smart recommendations for {course.strip()}: " + ", ".join([r['product_name'] for r in course_recommendations]) if course_recommendations else f"Added {product['product_name']} for {course.strip()}"
+        # Fallback for single-user testing
+        if not rows:
+            cur.execute(f"""
+                SELECT p.product_id, p.product_name, p.category, p.selling_price, p.used_in_course,
+                       (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
+                FROM product p
+                WHERE p.sold_date IS NULL
+                  AND p.product_id != %s
+                  AND ({where_pfx})
+                ORDER BY p.product_id DESC
+                LIMIT 8
+            """, tuple([product_id] + params))
+            rows = list(cur.fetchall() or [])
+
+        for r in rows:
+            if extract_course_prefixes(r.get('used_in_course')) & course_prefixes:
+                course_recommendations.append(r)
+
+        pfx_str = ", ".join(sorted(course_prefixes))
+        rec_text = f"Smart recommendations for {pfx_str}: " + ", ".join([r['product_name'] for r in course_recommendations[:4]]) if course_recommendations else f"Added {product['product_name']} for {pfx_str}"
         cur.execute("UPDATE wishlist SET recommendation = %s WHERE wishlist_id = %s", (rec_text, wishlist_id))
 
     mysql.connection.commit()
     cur.close()
 
+    pfx_list = sorted(list(course_prefixes))
+    pfx_label = pfx_list[0] if pfx_list else ''
+    match_msg = f"Added '{product['product_name']}' to your wishlist!"
+    if course_recommendations:
+        match_msg += f" Found {len(course_recommendations)} recommended items matching course prefix '{pfx_label}' in marketplace."
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
         return jsonify({
             'success': True,
-            'message': f"Added '{product['product_name']}' to your wishlist!",
+            'message': match_msg,
             'already_in': bool(already_included),
             'wishlist_count': get_wishlist_count(student_id),
             'course': course,
+            'course_prefix': pfx_label,
+            'matched_count': len(course_recommendations),
             'recommendations': course_recommendations
         })
 
@@ -1400,8 +1901,12 @@ def api_wishlist_recommendations(product_id):
 
     course = product.get('used_in_course', '')
     recs = []
-    if course and course.strip():
-        cur.execute("""
+    pfxs = extract_course_prefixes(course)
+    if pfxs:
+        pfx_clauses = ["UPPER(p.used_in_course) LIKE %s" for _ in pfxs]
+        where_pfx = " OR ".join(pfx_clauses)
+        params = [f"%{pfx}%" for pfx in pfxs]
+        cur.execute(f"""
             SELECT p.product_id, p.product_name, p.category, p.selling_price, p.used_in_course,
                    u.name AS seller_name,
                    (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
@@ -1409,15 +1914,19 @@ def api_wishlist_recommendations(product_id):
             JOIN user u ON p.student_id = u.student_id
             WHERE p.sold_date IS NULL
               AND p.product_id != %s
-              AND UPPER(p.used_in_course) = UPPER(%s)
-            LIMIT 4
-        """, (product_id, course.strip()))
-        recs = cur.fetchall()
+              AND ({where_pfx})
+            ORDER BY p.product_id DESC
+            LIMIT 6
+        """, tuple([product_id] + params))
+        for r in (cur.fetchall() or []):
+            if extract_course_prefixes(r.get('used_in_course')) & pfxs:
+                recs.append(r)
 
     cur.close()
     return jsonify({
         'success': True,
         'course': course,
+        'course_prefixes': list(pfxs),
         'recommendations': recs
     })
 
@@ -1487,6 +1996,92 @@ def get_latest_notifications():
         'notifications': formatted_notifs,
         'unread_count': unread_count
     })
+
+
+@app.route('/notifications')
+def notifications_view():
+    student_id = session.get('student_id')
+    if not student_id:
+        return redirect(url_for('login'))
+
+    filter_type = request.args.get('type', 'all').strip()
+
+    cur = mysql.connection.cursor()
+    query = """
+        SELECT n.n_id, n.buyer_notification, n.user_notification, n.wishlist_id,
+               n.text, n.notification_type, n.notification_date, n.notification_status,
+               u.name AS sender_name
+        FROM notification n
+        LEFT JOIN user u ON n.user_notification = u.student_id
+        WHERE n.buyer_notification = %s
+    """
+    params = [student_id]
+    if filter_type == 'unread':
+        query += " AND n.notification_status = 'unread'"
+    elif filter_type == 'wishlist':
+        query += " AND n.notification_type = 'wishlist_match'"
+    elif filter_type == 'orders':
+        query += " AND n.notification_type IN ('order_confirmed', 'payment_received')"
+    elif filter_type == 'chat':
+        query += " AND n.notification_type = 'chat'"
+
+    query += " ORDER BY n.notification_date DESC, n.n_id DESC LIMIT 50"
+    cur.execute(query, tuple(params))
+    notifications = cur.fetchall() or []
+
+    for n in notifications:
+        n['formatted_time'] = format_message_time(n.get('notification_date'))
+
+    # Overall notification counts for tabs and statistics
+    cur.execute("""
+        SELECT 
+            COUNT(*) as total_count,
+            SUM(CASE WHEN notification_status = 'unread' THEN 1 ELSE 0 END) as unread_count,
+            SUM(CASE WHEN notification_type = 'wishlist_match' THEN 1 ELSE 0 END) as wishlist_count,
+            SUM(CASE WHEN notification_type IN ('order_confirmed', 'payment_received') THEN 1 ELSE 0 END) as order_count,
+            SUM(CASE WHEN notification_type = 'chat' THEN 1 ELSE 0 END) as chat_count
+        FROM notification
+        WHERE buyer_notification = %s
+    """, (student_id,))
+    stats_row = cur.fetchone() or {}
+
+    total_count = stats_row.get('total_count') or 0
+    unread_count = stats_row.get('unread_count') or 0
+    wishlist_notif_count = stats_row.get('wishlist_count') or 0
+    order_notif_count = stats_row.get('order_count') or 0
+    chat_notif_count = stats_row.get('chat_count') or 0
+
+    cur.close()
+
+    cart_count = get_cart_count(student_id)
+    wishlist_count = get_wishlist_count(student_id)
+
+    return render_template(
+        'notifications.html',
+        notifications=notifications,
+        filter_type=filter_type,
+        total_count=total_count,
+        unread_count=unread_count,
+        wishlist_notif_count=wishlist_notif_count,
+        order_notif_count=order_notif_count,
+        chat_notif_count=chat_notif_count,
+        cart_count=cart_count,
+        wishlist_count=wishlist_count
+    )
+
+
+@app.route('/api/notifications/delete/<int:n_id>', methods=['POST'])
+def delete_notification(n_id):
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'success': False}), 401
+
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM notification WHERE n_id = %s AND buyer_notification = %s", (n_id, student_id))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'success': True, 'unread_count': get_unread_notifications_count(student_id)})
+
 
 
 # =========================================================================

@@ -658,6 +658,205 @@
     .toast-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .toast-content p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
 
+    /* Modal Backdrop & Dialog */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11, 17, 32, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-dialog {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes zoomIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.4);
+    }
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 22px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .modal-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .modal-tab-btn {
+      flex: 1;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .modal-tab-btn.active {
+      color: var(--primary-light);
+      border-bottom-color: var(--primary-light);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #e2e8f0;
+    }
+    .form-control {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .sold-picker-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .sold-picker-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .sold-picker-card:hover {
+      border-color: rgba(244, 63, 94, 0.35);
+      background: rgba(30, 41, 59, 0.7);
+    }
+    .sold-picker-thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #0f172a;
+      flex-shrink: 0;
+    }
+    .sold-picker-thumb-ph {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .badge-custom-req {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+    .course-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .course-chip-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .course-chip-btn:hover {
+      border-color: var(--primary-light);
+      color: #ffffff;
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .course-chip-btn.active {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: var(--primary-light);
+      color: var(--primary-light);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+
     /* Footer */
     footer {
       margin-top: auto;
@@ -700,6 +899,13 @@
           <span>Wishlist</span>
           <span class="count-pill" id="navWishlistCount">{{ wishlist_count if wishlist_count is defined else global_wishlist_count }}</span>
         </a>
+        <a href="{{ url_for('notifications_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-bell"></i>
+          <span>Alerts</span>
+          {% if global_unread_notifications_count and global_unread_notifications_count > 0 %}
+          <span class="count-pill-rose">{{ global_unread_notifications_count }}</span>
+          {% endif %}
+        </a>
         <a href="{{ url_for('cart_view') }}" class="nav-badge-btn">
           <i class="ph-bold ph-shopping-cart"></i>
           <span>Cart</span>
@@ -725,10 +931,10 @@
       <div class="header-info">
         <h1>
           <i class="ph-fill ph-heart"></i>
-          Academic Wishlist & Live Alerts
+          Academic Wishlist
         </h1>
         <p>
-          Save essential course materials, get intelligent recommendations for products used in the same courses (e.g. <strong>CSE260, PHY112</strong>), and receive instant notifications whenever a peer lists a matching item!
+          Save essential course materials, set custom wish requests for unlisted academic gear, and explore intelligent course-matched recommendations.
         </p>
       </div>
       <div class="header-stats">
@@ -741,51 +947,11 @@
           <span class="label">Courses Tracked</span>
         </div>
         <div class="stat-badge">
-          <span class="num" id="statUnreadNotifs">{{ unread_notifs }}</span>
-          <span class="label">Stock Alerts</span>
+          <span class="num" id="statCustomWishes">{{ custom_items|length }}</span>
+          <span class="label">Custom Requests</span>
         </div>
       </div>
     </header>
-
-    <!-- Instant Stock & Match Notifications Panel -->
-    {% if notifications %}
-    <section class="notif-section">
-      <div class="notif-header">
-        <div class="notif-title">
-          <i class="ph-fill ph-bell-ringing"></i>
-          <span>Instant Match & Wishlist Notifications</span>
-          {% if unread_notifs > 0 %}
-          <span class="count-pill-rose">{{ unread_notifs }} new</span>
-          {% endif %}
-        </div>
-        {% if unread_notifs > 0 %}
-        <button class="btn btn-outline btn-sm" onclick="markAllNotificationsRead()">
-          <i class="ph-bold ph-check"></i> Mark all read
-        </button>
-        {% endif %}
-      </div>
-      <div class="notif-list">
-        {% for notif in notifications %}
-        <div class="notif-item {% if notif.notification_status == 'unread' %}unread{% endif %}" id="notif-{{ notif.n_id }}">
-          <div class="notif-text">
-            <div class="notif-icon">
-              <i class="ph-fill ph-lightning"></i>
-            </div>
-            <div>
-              <div>{{ notif.text }}</div>
-              <span class="notif-date">{{ notif.notification_date.strftime('%b %d, %I:%M %p') if notif.notification_date else 'Recently' }}</span>
-            </div>
-          </div>
-          {% if notif.notification_status == 'unread' %}
-          <button class="btn btn-outline btn-sm" onclick="markNotificationRead({{ notif.n_id }})" title="Mark as read">
-            <i class="ph-bold ph-check"></i>
-          </button>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </section>
-    {% endif %}
 
     <!-- Wishlist Items Section -->
     <div class="section-title-wrap">
@@ -796,9 +962,14 @@
         </h2>
         <p class="section-subtitle">Items currently in your wishlist. We actively monitor the marketplace for discounts and new peer listings.</p>
       </div>
-      <a href="{{ url_for('marketplace') }}" class="btn btn-outline btn-sm">
-        <i class="ph-bold ph-plus"></i> Browse More
-      </a>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="openAddWishModal('sold')">
+          <i class="ph-bold ph-plus-circle"></i> + Add to Wishlist
+        </button>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline btn-sm">
+          <i class="ph-bold ph-storefront"></i> Browse Marketplace
+        </a>
+      </div>
     </div>
 
     {% if wishlist_items %}
@@ -863,17 +1034,15 @@
           <!-- Actions -->
           <div class="card-actions">
             {% if not item.sold_date %}
-            <form action="{{ url_for('add_to_cart_route', product_id=item.product_id) }}" method="POST" style="display: contents;">
-              <button type="submit" class="btn btn-primary btn-sm">
-                <i class="ph-bold ph-shopping-cart-simple"></i> Buy
-              </button>
-            </form>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-cart-{{ item.product_id }}" onclick="addToCartFromWishlist({{ item.product_id }}, '{{ item.product_name|escape }}')">
+              <i class="ph-bold ph-shopping-cart-simple"></i> Add to Cart
+            </button>
             <a href="{{ url_for('chat_view') }}?user={{ item.seller_id }}&product_id={{ item.product_id }}" class="btn btn-outline btn-sm">
               <i class="ph-bold ph-chat-teardrop"></i> Chat
             </a>
             {% else %}
-            <button class="btn btn-outline btn-sm card-actions-full" disabled style="opacity: 0.5;">
-              Item Sold Out
+            <button class="btn btn-outline btn-sm card-actions-full" disabled style="opacity: 0.7; color: #fda4af; border-color: rgba(244, 63, 94, 0.3);">
+              <i class="ph-bold ph-seal-check"></i> Sold Out (Tracking Alerts)
             </button>
             {% endif %}
             <button class="btn btn-danger btn-sm card-actions-full" onclick="removeFromWishlist({{ item.product_id }}, '{{ item.product_name|escape }}')">
@@ -885,17 +1054,93 @@
       </div>
       {% endfor %}
     </div>
-    {% else %}
+    {% endif %}
+
+    <!-- Custom Desired Items (Unlisted Wishes) Section -->
+    {% if custom_items %}
+    <div style="margin-top: 40px; margin-bottom: 24px;">
+      <div class="section-title-wrap">
+        <div>
+          <h2 class="section-title">
+            <i class="ph-bold ph-sparkle" style="color: var(--accent-amber);"></i>
+            Custom Wish Requests & Desired Items
+          </h2>
+          <p class="section-subtitle">Items you are looking for that aren't yet listed by peers. We notify you as soon as someone posts them!</p>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openAddWishModal('custom')" style="border-color: rgba(251, 191, 36, 0.4); color: #fbbf24;">
+          <i class="ph-bold ph-plus"></i> Request Another Item
+        </button>
+      </div>
+
+      <div class="product-grid" id="customWishlistGrid">
+        {% for ci in custom_items %}
+        <div class="product-card" id="custom-item-{{ ci.item_id }}" style="border-color: rgba(251, 191, 36, 0.25); background: rgba(15, 23, 42, 0.75);">
+          <div style="padding: 14px 18px 10px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap;">
+            <span class="badge badge-custom-req">
+              <i class="ph-bold ph-bookmark-simple"></i> Saved Wishlist Request
+            </span>
+            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+              {% if ci.courses_list %}
+                {% for crs in ci.courses_list %}
+                <span class="badge badge-course" style="font-size: 11px;">
+                  <i class="ph-fill ph-graduation-cap"></i> {{ crs }}
+                </span>
+                {% endfor %}
+              {% elif ci.used_in_course %}
+                <span class="badge badge-course">
+                  <i class="ph-fill ph-graduation-cap"></i> {{ ci.used_in_course }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="card-title-row">
+              <h3 class="card-title" style="font-size: 16px; color: #ffffff;">{{ ci.item_name }}</h3>
+              <span class="badge-inline">{{ ci.category or 'Academic' }}</span>
+            </div>
+
+            {% if ci.notes %}
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; line-height: 1.4;">
+              {{ ci.notes }}
+            </p>
+            {% endif %}
+
+            <div class="price-box" style="margin-top: auto;">
+              <div>
+                <span style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Target Budget</span>
+                <div class="current-price" style="font-size: 17px; color: #fbbf24;">
+                  {% if ci.target_price %}৳{{ "%.0f"|format(ci.target_price) }}{% else %}Flexible{% endif %}
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-danger btn-sm card-actions-full" onclick="removeCustomWish({{ ci.item_id }}, '{{ ci.item_name|escape }}')">
+              <i class="ph-bold ph-trash"></i> Remove Request
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if (not wishlist_items or wishlist_items|length == 0) and (not custom_items or custom_items|length == 0) %}
     <!-- Empty State -->
     <div class="empty-state">
       <div class="empty-icon">
         <i class="ph-bold ph-heart-break"></i>
       </div>
       <h3>Your Wishlist is Empty</h3>
-      <p>Save textbooks, lab kits (e.g. CSE260 breadboards, multimeters), calculators, and bicycles to get instant alerts and course bundle recommendations!</p>
-      <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
-        <i class="ph-bold ph-storefront"></i> Explore Campus Marketplace
-      </a>
+      <p>Save textbooks, calculators, and lab gear to get instant alerts and course recommendations. You can also add previously sold items or request unlisted items!</p>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" onclick="openAddWishModal('sold')">
+          <i class="ph-bold ph-plus-circle"></i> + Add to Wishlist
+        </button>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline">
+          <i class="ph-bold ph-storefront"></i> Explore Campus Marketplace
+        </a>
+      </div>
     </div>
     {% endif %}
 
@@ -909,7 +1154,9 @@
           <span class="rec-badge-tag">AI / Course Matched</span>
         </div>
         <span style="font-size: 13px; color: var(--text-muted);">
-          {% if wishlisted_courses %}
+          {% if wishlist_prefixes %}
+          Course Prefix Match: <strong style="color: #38bdf8;">{{ wishlist_prefixes|join(', ') }}</strong> (Matching 1st 3 letters of your wishlist course codes)
+          {% elif wishlisted_courses %}
           Suggested for your tracked courses: <strong>{{ wishlisted_courses|join(', ') }}</strong>
           {% else %}
           Popular essentials across BRACU courses
@@ -960,8 +1207,11 @@
             </div>
 
             <div class="card-actions">
-              <button class="btn btn-primary btn-sm card-actions-full" onclick="quickAddToWishlist({{ rec.product_id }}, '{{ rec.product_name|escape }}', '{{ rec.used_in_course|escape if rec.used_in_course else '' }}')">
-                <i class="ph-bold ph-heart"></i> + Add to Wishlist
+              <button type="button" class="btn btn-primary btn-sm" onclick="addToCartFromWishlist({{ rec.product_id }}, '{{ rec.product_name|escape }}')">
+                <i class="ph-bold ph-shopping-cart-simple"></i> Add to Cart
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="quickAddToWishlist({{ rec.product_id }}, '{{ rec.product_name|escape }}', '{{ rec.used_in_course|escape if rec.used_in_course else '' }}')">
+                <i class="ph-bold ph-heart"></i> Wishlist
               </button>
             </div>
           </div>
@@ -973,6 +1223,138 @@
 
   </main>
 
+  <!-- Add to Wishlist Modal (Sold Items & Custom Request) -->
+  <div id="addWishModal" class="modal-backdrop" onclick="handleModalBackdropClick(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="ph-bold ph-heart" style="color: var(--accent-rose);"></i> Add to Your Wishlist</h3>
+        <button type="button" class="modal-close-btn" onclick="closeAddWishModal()">&times;</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button type="button" class="modal-tab-btn active" id="tabBtnSold" onclick="switchWishTab('sold')">
+          <i class="ph-bold ph-tag"></i> Wish a Previously Sold Item
+        </button>
+        <button type="button" class="modal-tab-btn" id="tabBtnCustom" onclick="switchWishTab('custom')">
+          <i class="ph-bold ph-plus-circle"></i> Request Unlisted Item
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Sold Items -->
+      <div id="tabContentSold" class="modal-body">
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 14px;">
+          Select any previously sold item from the campus archive. Adding it to your wishlist tells us you need it, and we will send you an alert as soon as another student lists it!
+        </p>
+        <div style="position: relative; margin-bottom: 16px;">
+          <input type="text" id="soldSearchInput" class="form-control" placeholder="Search sold items by name or course (e.g. CSE221)..." onkeyup="filterSoldModal()">
+        </div>
+        <div class="sold-picker-grid" id="soldModalList">
+          {% if archived_sold_products %}
+            {% for sp in archived_sold_products %}
+            <div class="sold-picker-card" data-name="{{ sp.product_name|lower }}" data-course="{{ (sp.used_in_course or '')|lower }}">
+              {% if sp.photo %}
+              <img src="{{ sp.photo }}" alt="{{ sp.product_name }}" class="sold-picker-thumb">
+              {% else %}
+              <div class="sold-picker-thumb-ph"><i class="ph-bold ph-package"></i></div>
+              {% endif %}
+              <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 700; color: #ffffff;">{{ sp.product_name }}</div>
+                <div style="font-size: 12px; color: #94a3b8; display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+                  {% if sp.used_in_course %}
+                  <span style="color: #38bdf8; font-weight: 700;">{{ sp.used_in_course }}</span> &bull;
+                  {% endif %}
+                  <span>Sold for ৳{{ sp.selling_price }}</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="addSoldItemToWishlist({{ sp.product_id }}, this)" style="background: rgba(244, 63, 94, 0.12); color: #fda4af; border-color: rgba(244, 63, 94, 0.3); white-space: nowrap;">
+                {% if wishlisted_product_ids is defined and sp.product_id in wishlisted_product_ids %}
+                  <i class="ph-fill ph-check"></i> Wishlisted
+                {% else %}
+                  <i class="ph-bold ph-plus"></i> Wish Item
+                {% endif %}
+              </button>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align: center; padding: 24px; color: #94a3b8;">
+              No sold items currently recorded in the marketplace archive.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Custom Request -->
+      <div id="tabContentCustom" class="modal-body" style="display: none;">
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: #bae6fd; line-height: 1.4;">
+          <i class="ph-bold ph-info" style="color: #38bdf8;"></i>
+          <strong>Permanent Student Wishlist:</strong> Provide the product name and select all courses where it is used (e.g. <em>Jump Wires</em> for <em>CSE260, CSE250, CSE251</em>). This item is permanently stored in your account until you remove it. CampusCycle will automatically compare newly uploaded products and immediately send you a notification!
+        </div>
+
+        <form id="customWishForm" onsubmit="submitCustomWish(event)">
+          <div class="form-group">
+            <label for="customItemName">Product Name *</label>
+            <input type="text" id="customItemName" name="item_name" class="form-control" placeholder="e.g. Jump Wires, Breadboard Kit, or Calculus Stewart" required>
+          </div>
+
+          <div class="form-group">
+            <label for="customCourse">Relevant Course(s) (Select or Type Multiple)</label>
+            <input type="text" id="customCourse" name="used_in_course" class="form-control" placeholder="e.g. CSE260, CSE250, CSE251" oninput="syncCourseChips()">
+            <div style="font-size: 11.5px; color: #94a3b8; margin-top: 6px;">
+              Quick-click to add or remove relevant courses:
+            </div>
+            <div class="course-chips-wrap" id="courseChipsWrap">
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE260', this)">CSE260</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE250', this)">CSE250</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE251', this)">CSE251</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('EEE241', this)">EEE241</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('PHY111', this)">PHY111</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('PHY112', this)">PHY112</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE111', this)">CSE111</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE220', this)">CSE220</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE221', this)">CSE221</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('CSE321', this)">CSE321</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('MAT110', this)">MAT110</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('MAT120', this)">MAT120</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('MAT215', this)">MAT215</button>
+              <button type="button" class="course-chip-btn" onclick="toggleCourseChip('STA201', this)">STA201</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="customCategory">Category</label>
+              <select id="customCategory" name="category" class="form-control">
+                <option value="Lab Equipment">Lab Kits & Equipment (Wires, Breadboards)</option>
+                <option value="Books">Textbooks & Books</option>
+                <option value="Electronics">Electronics & Laptops</option>
+                <option value="Scientific Calculator">Scientific Calculator</option>
+                <option value="Bicycles">Bicycles & Accessories</option>
+                <option value="Stationery">Stationery & Notes</option>
+                <option value="Other">Other Academic Gear</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="customBudget">Target Budget (৳ Optional)</label>
+              <input type="number" id="customBudget" name="target_price" class="form-control" placeholder="e.g. 350" min="0" step="10">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="customNotes">Specific Details or Notes (Optional)</label>
+            <textarea id="customNotes" name="notes" class="form-control" rows="2" placeholder="e.g. Need male-to-male jumper wires (at least 30-40 pcs) for digital logic labs..."></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+            <button type="button" class="btn btn-outline" onclick="closeAddWishModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submitWishBtn">
+              <i class="ph-bold ph-plus-circle"></i> Save Wishlist Entry
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -982,6 +1364,58 @@
   </footer>
 
   <script>
+    // Add to Cart directly from Wishlist
+    async function addToCartFromWishlist(productId, productName) {
+      const btn = document.getElementById(`btn-cart-${productId}`) || event?.currentTarget;
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Adding...';
+      }
+
+      try {
+        const res = await fetch(`/add-to-cart/${productId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        if (data.success) {
+          const navCartCount = document.getElementById('navCartCount');
+          if (navCartCount && data.cart_count !== undefined) {
+            navCartCount.innerText = data.cart_count;
+          }
+          showToast('Added to Cart!', `'${productName}' is now in your cart.`, 'ph-shopping-cart-simple');
+          if (btn) {
+            btn.innerHTML = '<i class="ph-fill ph-check-circle"></i> In Cart';
+            btn.style.background = '#059669';
+            btn.style.borderColor = '#34d399';
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="ph-bold ph-shopping-cart-simple"></i> Add to Cart';
+              btn.style.background = '';
+              btn.style.borderColor = '';
+            }, 2500);
+          }
+        } else {
+          showToast('Notice', data.message || 'Could not add item to cart.', 'ph-warning');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+          }
+        }
+      } catch (err) {
+        console.error('Error adding to cart:', err);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
+    }
+
     // Show dynamic toast notification
     function showToast(title, message, icon = 'ph-check-circle', isCourseAlert = false) {
       const container = document.getElementById('toastContainer');
@@ -1019,10 +1453,15 @@
         if (data.success) {
           showToast('Added to Wishlist!', `'${productName}' is now tracked in your wishlist.`, 'ph-heart-straight');
           
-          if (courseCode) {
+          if (data.course_prefix) {
+            setTimeout(() => {
+              const matchedText = (data.matched_count && data.matched_count > 0) ? `Found ${data.matched_count} matching course item(s) in marketplace!` : `Matching course prefix: ${data.course_prefix}. We will alert you whenever new materials are posted!`;
+              showToast(`Course Prefix Match (${data.course_prefix})`, matchedText, 'ph-sparkle', true);
+            }, 700);
+          } else if (courseCode) {
             setTimeout(() => {
               showToast(`Smart Match (${courseCode})`, `We'll instantly alert you when related ${courseCode} course materials get posted!`, 'ph-sparkle', true);
-            }, 800);
+            }, 700);
           }
 
           // Update counters
@@ -1033,7 +1472,7 @@
             if (statTotal) statTotal.innerText = data.wishlist_count;
           }
 
-          // Disable button or reload smoothly
+          // Disable button and reload so new item appears in saved wishlist
           const card = document.getElementById(`rec-card-${productId}`);
           if (card) {
             const btn = card.querySelector('button');
@@ -1043,6 +1482,7 @@
               btn.style.opacity = '0.7';
             }
           }
+          setTimeout(() => location.reload(), 1100);
         }
       } catch (err) {
         console.error('Error adding to wishlist:', err);
@@ -1131,6 +1571,183 @@
       } catch (err) {
         console.error('Error marking all notifications read:', err);
       }
+    }
+
+    // Modal management & tabs
+    function openAddWishModal(defaultTab = 'sold') {
+      const modal = document.getElementById('addWishModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        switchWishTab(defaultTab);
+      }
+    }
+
+    function closeAddWishModal() {
+      const modal = document.getElementById('addWishModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function handleModalBackdropClick(e) {
+      if (e.target.id === 'addWishModal') {
+        closeAddWishModal();
+      }
+    }
+
+    function switchWishTab(tab) {
+      const tabBtnSold = document.getElementById('tabBtnSold');
+      const tabBtnCustom = document.getElementById('tabBtnCustom');
+      const tabContentSold = document.getElementById('tabContentSold');
+      const tabContentCustom = document.getElementById('tabContentCustom');
+
+      if (!tabBtnSold || !tabBtnCustom) return;
+
+      if (tab === 'sold') {
+        tabBtnSold.classList.add('active');
+        tabBtnCustom.classList.remove('active');
+        if (tabContentSold) tabContentSold.style.display = 'block';
+        if (tabContentCustom) tabContentCustom.style.display = 'none';
+      } else {
+        tabBtnSold.classList.remove('active');
+        tabBtnCustom.classList.add('active');
+        if (tabContentSold) tabContentSold.style.display = 'none';
+        if (tabContentCustom) tabContentCustom.style.display = 'block';
+      }
+    }
+
+    function filterSoldModal() {
+      const input = document.getElementById('soldSearchInput');
+      const q = (input ? input.value : '').toLowerCase().trim();
+      const cards = document.querySelectorAll('#soldModalList .sold-picker-card');
+      cards.forEach(c => {
+        const name = (c.getAttribute('data-name') || '').toLowerCase();
+        const course = (c.getAttribute('data-course') || '').toLowerCase();
+        if (!q || name.includes(q) || course.includes(q)) {
+          c.style.display = 'flex';
+        } else {
+          c.style.display = 'none';
+        }
+      });
+    }
+
+    async function addSoldItemToWishlist(productId, btn) {
+      try {
+        const response = await fetch(`/wishlist/add/${productId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        if (data.success) {
+          btn.innerHTML = '<i class="ph-fill ph-check"></i> Wishlisted';
+          btn.style.color = '#34d399';
+          btn.style.borderColor = '#34d399';
+          showToast('Added to Wishlist!', data.message || 'Item added to your wishlist.', 'ph-heart-fill');
+          if (data.wishlist_count !== undefined) {
+            const statTotal = document.getElementById('statWishlistTotal');
+            if (statTotal) statTotal.innerText = data.wishlist_count;
+          }
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast('Wishlist', data.message || 'Could not add item.', 'ph-info');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function submitCustomWish(e) {
+      e.preventDefault();
+      const form = document.getElementById('customWishForm');
+      const formData = new FormData(form);
+      const submitBtn = document.getElementById('submitWishBtn');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/wishlist/add-custom', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        if (data.success) {
+          showToast('Custom Wish Saved!', data.message, 'ph-sparkle');
+          closeAddWishModal();
+          setTimeout(() => location.reload(), 900);
+        } else {
+          showToast('Notice', data.message || 'Failed to save wish request.', 'ph-warning');
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error(err);
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+
+    async function removeCustomWish(itemId, itemName) {
+      if (!confirm(`Remove your custom request for '${itemName}'?`)) return;
+
+      try {
+        const res = await fetch(`/wishlist/remove-custom/${itemId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const el = document.getElementById(`custom-item-${itemId}`);
+          if (el) {
+            el.style.transform = 'scale(0.9)';
+            el.style.opacity = '0';
+            setTimeout(() => {
+              el.remove();
+              location.reload();
+            }, 250);
+          }
+          showToast('Request Removed', `'${itemName}' was removed from your custom requests.`, 'ph-trash');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Multi-course chips toggle & sync
+    function toggleCourseChip(courseCode, btnEl) {
+      const input = document.getElementById('customCourse');
+      if (!input) return;
+
+      let current = input.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+      const upperCourse = courseCode.toUpperCase();
+
+      if (current.includes(upperCourse)) {
+        current = current.filter(c => c !== upperCourse);
+        if (btnEl) btnEl.classList.remove('active');
+      } else {
+        current.push(upperCourse);
+        if (btnEl) btnEl.classList.add('active');
+      }
+      input.value = current.join(', ');
+    }
+
+    function syncCourseChips() {
+      const input = document.getElementById('customCourse');
+      if (!input) return;
+
+      const current = input.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+      const chips = document.querySelectorAll('#courseChipsWrap .course-chip-btn');
+      chips.forEach(btn => {
+        const text = btn.innerText.trim().toUpperCase();
+        if (current.includes(text)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
     }
   </script>
 </body>

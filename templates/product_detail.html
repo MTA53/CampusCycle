@@ -844,6 +844,19 @@
 
         <!-- Action Buttons: Pay Now, Add to Cart, Chat & Wishlist -->
         <div class="actions-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+          {% if product.sold_date %}
+          <div style="grid-column: span 2; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+            <i class="ph-bold ph-seal-check" style="font-size: 24px; color: #f43f5e; flex-shrink: 0;"></i>
+            <div>
+              <div style="font-weight: 800; color: #ffffff; font-size: 14px;">This item was sold on {{ product.sold_date }}.</div>
+              <div style="font-size: 12px; color: #fda4af;">Item is sold out. Add it to your Wishlist below to get alerted when another peer posts a similar item!</div>
+            </div>
+          </div>
+          <!-- Chat Button -->
+          <a href="{{ url_for('chat_view', user=seller.student_id if seller else '', product_id=product.product_id) }}" class="btn btn-chat" style="grid-column: span 2; justify-content: center;">
+            <i class="ph ph-chats-circle"></i> Chat with Seller
+          </a>
+          {% else %}
           <!-- Primary Pay & Buy Now Button -->
           <button type="button" class="btn btn-buy-now" id="buyNowBtn" onclick="openPaymentModal()" style="grid-column: span 2; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; font-weight: 800; padding: 14px; font-size: 15px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4); transition: all 0.2s ease;">
             <i class="ph-bold ph-lightning" style="font-size: 18px; color: #fef08a;"></i> Pay & Buy Now (৳{{ product.selling_price }})
@@ -856,6 +869,7 @@
           <a href="{{ url_for('chat_view', user=seller.student_id if seller else '', product_id=product.product_id) }}" class="btn btn-chat">
             <i class="ph ph-chats-circle"></i> Chat with Seller
           </a>
+          {% endif %}
           <button type="button" class="btn" id="addToWishlistBtn" onclick="addToWishlistAjax({{ product.product_id }})" style="grid-column: span 2; background: rgba(244, 63, 94, 0.12); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.3); font-weight: 700; padding: 12px; justify-content: center;">
             <i class="ph-fill ph-heart"></i> Add to Wishlist & Track Course
           </button>
@@ -1053,7 +1067,10 @@
             btn.style.color = '#34d399';
             btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
           }
-          if (data.course) {
+          if (data.course_prefix) {
+            const extra = (data.matched_count && data.matched_count > 0) ? `Found ${data.matched_count} matching course item(s) recommended in marketplace!` : `Item saved for course prefix '${data.course_prefix}'! We will alert you when matching materials are posted.`;
+            showToast('ph-sparkle', '#38bdf8', 'Wishlist Course Match (' + data.course_prefix + ')', extra);
+          } else if (data.course) {
             showToast('ph-sparkle', '#38bdf8', 'Wishlist & Course Alert (' + data.course + ')', 'Item saved! We will alert you whenever matching ' + data.course + ' items are posted.');
           } else {
             showToast('ph-heart-fill', '#f43f5e', 'Added to Wishlist!', data.message);

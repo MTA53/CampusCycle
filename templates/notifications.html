@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications & Live Alerts - CampusCycle</title>
+  <!-- Google Fonts & Phosphor Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --bg-main: #0b1120;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(56, 189, 248, 0.4);
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --primary-light: #34d399;
+      --accent-cyan: #38bdf8;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --accent-violet: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-sub: #cbd5e1;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Glows */
+    .ambient-glow {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.15;
+    }
+    .glow-1 { top: -100px; left: -100px; background: #38bdf8; }
+    .glow-2 { bottom: -100px; right: -100px; background: #10b981; }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    }
+    .logo span { color: var(--primary-light); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .nav-badge-btn:hover, .nav-badge-btn.active {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #ffffff;
+    }
+    .count-pill {
+      background: var(--primary);
+      color: white;
+      border-radius: 9999px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .count-pill-rose {
+      background: var(--accent-rose);
+      color: white;
+      border-radius: 9999px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Container */
+    .notif-container {
+      max-width: 1080px;
+      width: 100%;
+      margin: 32px auto;
+      padding: 0 24px;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Page Header */
+    .page-header {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(14px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .header-info h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .header-info h1 i { color: var(--accent-cyan); }
+    .header-info p {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 580px;
+      line-height: 1.5;
+    }
+    .header-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 10px 16px;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 95px;
+    }
+    .stat-badge .num {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      display: block;
+    }
+    .stat-badge .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tabs & Toolbar */
+    .notif-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px 12px;
+    }
+    .notif-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      background: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .tab-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn.active {
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .tab-btn .badge-pill {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 9999px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+    .tab-btn.active .badge-pill {
+      background: var(--accent-cyan);
+      color: #0f172a;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid var(--card-border);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+
+    /* Notifications List */
+    .notif-list-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+    .notif-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    .notif-row:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .notif-row.unread {
+      background: rgba(56, 189, 248, 0.07);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .notif-row.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 14px;
+      bottom: 14px;
+      width: 4px;
+      border-radius: 0 4px 4px 0;
+      background: var(--accent-cyan);
+    }
+
+    .notif-content-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      flex: 1;
+    }
+    .notif-type-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-wishlist {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .icon-order {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary-light);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .icon-chat {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--accent-violet);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .icon-system {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .notif-main-text {
+      flex: 1;
+    }
+    .notif-header-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .notif-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .tag-wishlist { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+    .tag-order { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .tag-chat { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+    .tag-system { background: rgba(251, 191, 36, 0.2); color: #fde68a; }
+
+    .notif-time {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .notif-body-text {
+      font-size: 14.5px;
+      color: #ffffff;
+      line-height: 1.45;
+      margin-top: 4px;
+    }
+    .notif-sender {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .notif-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-icon-action {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-icon-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+    .btn-icon-action.check:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--primary-light);
+      color: var(--primary-light);
+    }
+    .btn-icon-action.delete:hover {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--accent-rose);
+      color: var(--accent-rose);
+    }
+
+    /* Empty State */
+    .empty-state {
+      background: var(--card-bg);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 60px 24px;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .empty-icon {
+      width: 68px;
+      height: 68px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-radius: 14px;
+      padding: 14px 18px;
+      min-width: 300px;
+      color: #ffffff;
+      pointer-events: auto;
+      animation: slideUp 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--card-border);
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="{{ url_for('home') }}" class="logo">
+        <div class="logo-icon">
+          <i class="ph-bold ph-arrows-clockwise"></i>
+        </div>
+        Campus<span>Cycle</span>
+      </a>
+      <div class="nav-actions">
+        <a href="{{ url_for('marketplace') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-storefront"></i>
+          <span>Marketplace</span>
+        </a>
+        <a href="{{ url_for('wishlist_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-heart"></i>
+          <span>Wishlist</span>
+          <span class="count-pill">{{ global_wishlist_count or wishlist_count or 0 }}</span>
+        </a>
+        <a href="{{ url_for('notifications_view') }}" class="nav-badge-btn active">
+          <i class="ph-fill ph-bell-ringing"></i>
+          <span>Notifications</span>
+          <span class="count-pill-rose" id="navNotifCount" style="{% if unread_count == 0 %}display: none;{% endif %}">{{ unread_count }}</span>
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-shopping-cart"></i>
+          <span>Cart</span>
+          <span class="count-pill">{{ global_cart_count or cart_count or 0 }}</span>
+        </a>
+        <a href="{{ url_for('chat_view') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-chat-teardrop-dots"></i>
+          <span>Chat</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="nav-badge-btn">
+          <i class="ph-bold ph-user-circle"></i>
+          <span>Profile</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Notifications Container -->
+  <main class="notif-container">
+
+    <!-- Header Section -->
+    <header class="page-header">
+      <div class="header-info">
+        <h1>
+          <i class="ph-fill ph-bell-ringing"></i>
+          Notifications & Activity Center
+        </h1>
+        <p>
+          Real-time notification texts for peer wishlist stock matches, digital payments, order receipts, and campus messages.
+        </p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-badge">
+          <span class="num" id="statTotalNotifs">{{ total_count }}</span>
+          <span class="label">Total</span>
+        </div>
+        <div class="stat-badge">
+          <span class="num" id="statUnreadNotifs" style="color: var(--accent-cyan);">{{ unread_count }}</span>
+          <span class="label">Unread</span>
+        </div>
+        <div class="stat-badge">
+          <span class="num">{{ wishlist_notif_count }}</span>
+          <span class="label">Wish Alerts</span>
+        </div>
+        <div class="stat-badge">
+          <span class="num">{{ order_notif_count }}</span>
+          <span class="label">Orders</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Toolbar: Tabs & Mark All Read -->
+    <div class="notif-toolbar">
+      <div class="notif-tabs">
+        <a href="{{ url_for('notifications_view', type='all') }}" class="tab-btn {% if filter_type == 'all' or not filter_type %}active{% endif %}">
+          <i class="ph-bold ph-squares-four"></i> All Alerts
+          <span class="badge-pill">{{ total_count }}</span>
+        </a>
+        <a href="{{ url_for('notifications_view', type='unread') }}" class="tab-btn {% if filter_type == 'unread' %}active{% endif %}">
+          <i class="ph-bold ph-envelope-simple"></i> Unread
+          {% if unread_count > 0 %}
+          <span class="badge-pill" style="background: var(--accent-rose); color: white;">{{ unread_count }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('notifications_view', type='wishlist') }}" class="tab-btn {% if filter_type == 'wishlist' %}active{% endif %}">
+          <i class="ph-bold ph-lightning"></i> Wishlist Alerts
+          <span class="badge-pill">{{ wishlist_notif_count }}</span>
+        </a>
+        <a href="{{ url_for('notifications_view', type='orders') }}" class="tab-btn {% if filter_type == 'orders' %}active{% endif %}">
+          <i class="ph-bold ph-receipt"></i> Orders & Payments
+          <span class="badge-pill">{{ order_notif_count }}</span>
+        </a>
+        <a href="{{ url_for('notifications_view', type='chat') }}" class="tab-btn {% if filter_type == 'chat' %}active{% endif %}">
+          <i class="ph-bold ph-chat-teardrop"></i> Chat Texts
+          <span class="badge-pill">{{ chat_notif_count }}</span>
+        </a>
+      </div>
+
+      {% if unread_count > 0 %}
+      <button type="button" class="btn btn-outline btn-sm" onclick="markAllAsRead()">
+        <i class="ph-bold ph-check-double"></i> Mark All as Read
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Notifications List -->
+    {% if notifications and notifications|length > 0 %}
+    <div class="notif-list-card" id="notifListContainer">
+      {% for notif in notifications %}
+      <div class="notif-row {% if notif.notification_status == 'unread' %}unread{% endif %}" id="notif-row-{{ notif.n_id }}">
+        
+        <div class="notif-content-wrap">
+          <!-- Icon by Type -->
+          {% if notif.notification_type == 'wishlist_match' %}
+          <div class="notif-type-icon icon-wishlist">
+            <i class="ph-fill ph-lightning"></i>
+          </div>
+          {% elif notif.notification_type in ['order_confirmed', 'payment_received'] %}
+          <div class="notif-type-icon icon-order">
+            <i class="ph-fill ph-receipt"></i>
+          </div>
+          {% elif notif.notification_type == 'chat' %}
+          <div class="notif-type-icon icon-chat">
+            <i class="ph-fill ph-chat-teardrop-dots"></i>
+          </div>
+          {% else %}
+          <div class="notif-type-icon icon-system">
+            <i class="ph-fill ph-bell"></i>
+          </div>
+          {% endif %}
+
+          <div class="notif-main-text">
+            <div class="notif-header-line">
+              {% if notif.notification_type == 'wishlist_match' %}
+              <span class="notif-tag tag-wishlist">Wishlist Match</span>
+              {% elif notif.notification_type in ['order_confirmed', 'payment_received'] %}
+              <span class="notif-tag tag-order">Order & Payment</span>
+              {% elif notif.notification_type == 'chat' %}
+              <span class="notif-tag tag-chat">Message</span>
+              {% else %}
+              <span class="notif-tag tag-system">Notification</span>
+              {% endif %}
+              <span class="notif-time">{{ notif.formatted_time }}</span>
+            </div>
+
+            <div class="notif-body-text">
+              {{ notif.text }}
+            </div>
+
+            {% if notif.sender_name and notif.user_notification %}
+            <div class="notif-sender">
+              <i class="ph-bold ph-user"></i> From: <strong>{{ notif.sender_name }}</strong>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row Actions -->
+        <div class="notif-actions">
+          {% if notif.notification_type == 'chat' and notif.user_notification %}
+          <a href="{{ url_for('chat_view') }}?user={{ notif.user_notification }}" class="btn btn-outline btn-sm" style="color: var(--accent-violet); border-color: rgba(168, 85, 247, 0.3);" title="Reply in Chat">
+            <i class="ph-bold ph-chat-teardrop"></i> Reply
+          </a>
+          {% elif notif.notification_type == 'wishlist_match' %}
+          <a href="{{ url_for('marketplace') }}" class="btn btn-outline btn-sm" style="color: var(--accent-cyan); border-color: rgba(56, 189, 248, 0.3);" title="View Marketplace">
+            <i class="ph-bold ph-storefront"></i> View
+          </a>
+          {% elif notif.notification_type in ['order_confirmed', 'payment_received'] %}
+          <a href="{{ url_for('profile') }}" class="btn btn-outline btn-sm" style="color: var(--primary-light); border-color: rgba(16, 185, 129, 0.3);" title="View Profile Orders">
+            <i class="ph-bold ph-receipt"></i> Orders
+          </a>
+          {% endif %}
+
+          {% if notif.notification_status == 'unread' %}
+          <button type="button" class="btn-icon-action check" id="read-btn-{{ notif.n_id }}" onclick="markSingleRead({{ notif.n_id }})" title="Mark as read">
+            <i class="ph-bold ph-check"></i>
+          </button>
+          {% endif %}
+
+          <button type="button" class="btn-icon-action delete" onclick="deleteSingleNotification({{ notif.n_id }})" title="Dismiss notification">
+            <i class="ph-bold ph-trash"></i>
+          </button>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="ph-bold ph-bell-slash"></i>
+      </div>
+      <h3 style="font-size: 19px; font-weight: 700; margin-bottom: 8px;">No notifications found</h3>
+      <p style="color: #94a3b8; font-size: 14px; max-width: 440px; margin: 0 auto 20px;">
+        {% if filter_type == 'unread' %}
+        You're all caught up! You have no unread notification texts right now.
+        {% else %}
+        You don't have any notifications in this category yet. When peers upload matching course items or message you, alerts will appear here.
+        {% endif %}
+      </p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <a href="{{ url_for('notifications_view') }}" class="btn btn-outline">
+          <i class="ph-bold ph-arrows-clockwise"></i> Show All Alerts
+        </a>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline" style="color: var(--primary-light); border-color: rgba(16, 185, 129, 0.3);">
+          <i class="ph-bold ph-storefront"></i> Go to Marketplace
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 CampusCycle &bull; BRAC University Peer-to-Peer Academic Ecosystem</p>
+  </footer>
+
+  <script>
+    function showToast(message, icon = 'ph-check-circle') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <i class="ph-fill ${icon}" style="font-size: 20px; color: var(--accent-cyan); flex-shrink: 0;"></i>
+        <div style="font-size: 13.5px; font-weight: 600;">${message}</div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    async function markSingleRead(notifId) {
+      try {
+        const res = await fetch(`/api/notifications/read/${notifId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const row = document.getElementById(`notif-row-${notifId}`);
+          if (row) {
+            row.classList.remove('unread');
+            const checkBtn = document.getElementById(`read-btn-${notifId}`);
+            if (checkBtn) checkBtn.remove();
+          }
+          const unreadStat = document.getElementById('statUnreadNotifs');
+          if (unreadStat) unreadStat.innerText = data.unread_count || 0;
+          const navNotifCount = document.getElementById('navNotifCount');
+          if (navNotifCount) {
+            if (data.unread_count > 0) {
+              navNotifCount.innerText = data.unread_count;
+              navNotifCount.style.display = 'inline-block';
+            } else {
+              navNotifCount.style.display = 'none';
+            }
+          }
+          showToast('Notification marked as read');
+        }
+      } catch (err) {
+        console.error('Error marking notification as read:', err);
+      }
+    }
+
+    async function markAllAsRead() {
+      try {
+        const res = await fetch('/api/notifications/read-all', {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.querySelectorAll('.notif-row.unread').forEach(row => {
+            row.classList.remove('unread');
+            const btn = row.querySelector('.btn-icon-action.check');
+            if (btn) btn.remove();
+          });
+          const unreadStat = document.getElementById('statUnreadNotifs');
+          if (unreadStat) unreadStat.innerText = '0';
+          const navNotifCount = document.getElementById('navNotifCount');
+          if (navNotifCount) navNotifCount.style.display = 'none';
+          showToast('All notifications marked as read', 'ph-check-double');
+        }
+      } catch (err) {
+        console.error('Error marking all notifications as read:', err);
+      }
+    }
+
+    async function deleteSingleNotification(notifId) {
+      try {
+        const res = await fetch(`/api/notifications/delete/${notifId}`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const row = document.getElementById(`notif-row-${notifId}`);
+          if (row) {
+            row.style.transform = 'scale(0.95)';
+            row.style.opacity = '0';
+            setTimeout(() => {
+              row.remove();
+              const container = document.getElementById('notifListContainer');
+              if (container && container.children.length === 0) {
+                location.reload();
+              }
+            }, 250);
+          }
+          if (data.unread_count !== undefined) {
+            const unreadStat = document.getElementById('statUnreadNotifs');
+            if (unreadStat) unreadStat.innerText = data.unread_count;
+            const navNotifCount = document.getElementById('navNotifCount');
+            if (navNotifCount) {
+              if (data.unread_count > 0) {
+                navNotifCount.innerText = data.unread_count;
+                navNotifCount.style.display = 'inline-block';
+              } else {
+                navNotifCount.style.display = 'none';
+              }
+            }
+          }
+          showToast('Notification dismissed', 'ph-trash');
+        }
+      } catch (err) {
+        console.error('Error deleting notification:', err);
+      }
+    }
+  </script>
+</body>
+</html>
