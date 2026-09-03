@@ -573,7 +573,7 @@ def marketplace():
         WHERE p.sold_date IS NULL
         ORDER BY p.product_id DESC
     """)
-    available_products = cur.fetchall() or []
+    available_products = list(cur.fetchall() or [])
 
     # Recently Sold items
     cur.execute("""
@@ -587,7 +587,7 @@ def marketplace():
         WHERE p.sold_date IS NOT NULL
         ORDER BY p.sold_date DESC, p.product_id DESC
     """)
-    sold_products = cur.fetchall() or []
+    sold_products = list(cur.fetchall() or [])
 
     for p in available_products:
         p['age'] = compute_product_age(p.get('purchase_date'))
