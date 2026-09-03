@@ -588,6 +588,132 @@
       background: #10b981;
       color: #ffffff;
     }
+    .btn-review-action {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-review-action:hover {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fef08a;
+      transform: translateY(-1px);
+    }
+    .btn-review-action.reviewed {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .btn-review-action.reviewed:hover {
+      background: rgba(16, 185, 129, 0.22);
+      color: #6ee7b7;
+    }
+
+    /* Review Cards Grid */
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .review-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px 18px;
+      transition: all 0.2s;
+    }
+    .review-card:hover {
+      border-color: rgba(245, 158, 11, 0.3);
+      background: rgba(30, 41, 59, 0.7);
+    }
+    .review-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .review-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .review-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #ffffff;
+      font-size: 13px;
+    }
+    .review-author-name {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 13.5px;
+    }
+    .review-author-badge {
+      font-size: 11px;
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .review-stars {
+      color: #fbbf24;
+      font-size: 14px;
+      display: flex;
+      gap: 2px;
+    }
+    .review-product-tag {
+      display: inline-block;
+      font-size: 11.5px;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .review-comment {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .review-date {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    /* Star Rating Selector in Modal */
+    .star-select-row {
+      display: flex;
+      gap: 8px;
+      font-size: 32px;
+      color: #475569;
+      cursor: pointer;
+      margin: 12px 0 18px;
+      justify-content: center;
+    }
+    .star-select-row i {
+      transition: all 0.15s;
+    }
+    .star-select-row i:hover,
+    .star-select-row i.hovered,
+    .star-select-row i.selected {
+      color: #fbbf24;
+      transform: scale(1.15);
+    }
 
     /* Empty state */
     .empty-state {
@@ -1027,10 +1153,18 @@
             <i class="ph ph-arrows-left-right"></i> Exchanges
             <span class="tab-count">{{ exchanges|length }}</span>
           </button>
+          <button type="button" class="tab-btn" onclick="switchTab('reviews', this)">
+            <i class="ph ph-star"></i> Reviews & Ratings
+            <span class="tab-count">{{ reviews_received|length }}</span>
+          </button>
           {% else %}
           <button type="button" class="tab-btn active" onclick="switchTab('sales', this)">
             <i class="ph ph-tag"></i> Active Listings & Products
             <span class="tab-count">{{ sales|length }}</span>
+          </button>
+          <button type="button" class="tab-btn" onclick="switchTab('reviews', this)">
+            <i class="ph ph-star"></i> Reviews & Ratings
+            <span class="tab-count">{{ reviews_received|length }}</span>
           </button>
           {% endif %}
         </div>
@@ -1121,6 +1255,17 @@
                           {% if (item.payment_method == 'cash_on_meetup' or not item.payment_method) and not item.confirmation %}
                             <button type="button" class="btn-pay-action" onclick="openPayOrderModal({{ item.order_id }}, '{{ item.product_name or "Order #" ~ item.order_id }}', {{ item.final_bill or 0 }})">
                               <i class="ph-bold ph-credit-card"></i> Pay Online
+                            </button>
+                          {% endif %}
+                          
+                          <!-- Review Seller Option (Verified Buyer Only) -->
+                          {% if item.buyer_rating %}
+                            <button type="button" class="btn-review-action reviewed" onclick="openReviewModal({{ item.order_id }}, '{{ item.seller_name or 'Seller' }}', '{{ item.product_name or 'Item' }}', {{ item.buyer_rating }}, '{{ (item.buyer_comment or '')|replace('\'', '\\\'')|replace('\"', '&quot;') }}')">
+                              <i class="ph-fill ph-star"></i> {{ item.buyer_rating }}★ (Edit)
+                            </button>
+                          {% else %}
+                            <button type="button" class="btn-review-action" onclick="openReviewModal({{ item.order_id }}, '{{ item.seller_name or 'Seller' }}', '{{ item.product_name or 'Item' }}', 5, '')">
+                              <i class="ph-bold ph-star"></i> Review Seller
                             </button>
                           {% endif %}
                         </div>
@@ -1220,6 +1365,54 @@
           <div class="empty-state">
             <div class="empty-icon"><i class="ph ph-arrows-left-right"></i></div>
             <p class="empty-text">No textbook or equipment exchange history recorded yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Tab Pane: Reviews & Ratings -->
+      <div id="tab-reviews" class="tab-pane">
+        {% if reviews_received and reviews_received|length > 0 %}
+          <div class="reviews-grid">
+            {% for r in reviews_received %}
+              <div class="review-card">
+                <div class="review-card-header">
+                  <div class="review-author">
+                    <div class="review-avatar">{{ r.reviewer_name[0]|upper if r.reviewer_name else 'U' }}</div>
+                    <div>
+                      <div class="review-author-name">{{ r.reviewer_name or 'BRACU Student' }}</div>
+                      <div class="review-author-badge"><i class="ph-fill ph-seal-check"></i> Verified Buyer</div>
+                    </div>
+                  </div>
+                  <div class="review-stars">
+                    {% for i in range(r.rating or 5) %}
+                      <i class="ph-fill ph-star"></i>
+                    {% endfor %}
+                    {% for i in range(5 - (r.rating or 5)) %}
+                      <i class="ph ph-star" style="opacity: 0.25;"></i>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                {% if r.product_name %}
+                  <div class="review-product-tag">
+                    <i class="ph-bold ph-tag"></i> Item: <strong>{{ r.product_name }}</strong> (Order #{{ r.order_id }})
+                  </div>
+                {% endif %}
+
+                <div class="review-comment">
+                  "{{ r.comment or 'Great experience, prompt on-campus handover and verified item condition!' }}"
+                </div>
+
+                <div class="review-date">
+                  <i class="ph ph-clock"></i> {{ r.review_date.strftime('%d %b %Y, %I:%M %p') if r.review_date else 'Recent' }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph ph-star-half"></i></div>
+            <p class="empty-text">No reviews received yet. Verified reviews will appear here after peers complete purchases!</p>
           </div>
         {% endif %}
       </div>
@@ -1700,7 +1893,156 @@
         form.submit();
       }
     }
+
+    // ==========================================
+    // VERIFIED BUYER REVIEW MODAL HANDLERS
+    // ==========================================
+    let currentRatingValue = 5;
+
+    function openReviewModal(orderId, sellerName, productName, existingRating, existingComment) {
+      document.getElementById('reviewOrderIdInput').value = orderId;
+      document.getElementById('reviewModalOrderTag').innerText = `#ORD-${orderId}`;
+      document.getElementById('reviewModalSellerName').innerText = sellerName || 'Peer Seller';
+      document.getElementById('reviewModalProduct').innerText = productName || 'Academic Item';
+      document.getElementById('reviewCommentInput').value = existingComment || '';
+
+      const ratingVal = parseInt(existingRating) || 5;
+      setReviewRating(ratingVal);
+
+      const submitBtn = document.getElementById('reviewSubmitBtn');
+      if (existingRating && existingRating > 0) {
+        submitBtn.innerHTML = '<i class="ph-bold ph-check"></i> Update My Review';
+      } else {
+        submitBtn.innerHTML = '<i class="ph-bold ph-star"></i> Submit Verified Review';
+      }
+      submitBtn.disabled = false;
+
+      document.getElementById('reviewModalBackdrop').style.display = 'flex';
+    }
+
+    function closeReviewModal() {
+      document.getElementById('reviewModalBackdrop').style.display = 'none';
+    }
+
+    function setReviewRating(val) {
+      currentRatingValue = val;
+      document.getElementById('reviewRatingInput').value = val;
+      const stars = document.querySelectorAll('#starRatingContainer i');
+      stars.forEach((s, idx) => {
+        if (idx < val) {
+          s.className = 'ph-fill ph-star selected';
+        } else {
+          s.className = 'ph ph-star';
+        }
+      });
+      const labels = ['1 Star (Poor)', '2 Stars (Fair)', '3 Stars (Good)', '4 Stars (Very Good)', '5 Stars (Excellent - Highly Recommended)'];
+      document.getElementById('starRatingLabel').innerText = labels[val - 1] || `${val} Stars`;
+    }
+
+    function hoverReviewRating(val) {
+      const stars = document.querySelectorAll('#starRatingContainer i');
+      stars.forEach((s, idx) => {
+        if (idx < val) {
+          s.className = 'ph-fill ph-star hovered';
+        } else {
+          s.className = 'ph ph-star';
+        }
+      });
+    }
+
+    function resetHoverReviewRating() {
+      setReviewRating(currentRatingValue);
+    }
+
+    async function handleReviewSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('reviewForm');
+      const formData = new FormData(form);
+      const btn = document.getElementById('reviewSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Recording Review...';
+
+      try {
+        const res = await fetch('/submit-review', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Review submitted successfully!');
+          window.location.reload();
+        } else {
+          alert(data.message || 'Failed to submit review.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ph-bold ph-star"></i> Submit Verified Review';
+        }
+      } catch (err) {
+        form.submit();
+      }
+    }
   </script>
+
+  <!-- Verified Buyer Review Modal -->
+  <div id="reviewModalBackdrop" class="modal-backdrop" onclick="if(event.target===this) closeReviewModal();">
+    <div class="modal-card" style="max-width: 480px; padding: 24px; background: #0f172a; border: 1.5px solid rgba(245, 158, 11, 0.35);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 20px;">
+            <i class="ph-bold ph-star"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 16.5px; font-weight: 800; color: #ffffff; margin: 0;">Rate & Review Seller</h3>
+            <span style="font-size: 11.5px; color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+              <i class="ph-fill ph-seal-check"></i> Verified Purchase Required
+            </span>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeReviewModal()">&times;</button>
+      </div>
+
+      <div style="background: rgba(30, 41, 59, 0.6); padding: 12px 14px; border-radius: 10px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Seller</span>
+          <span id="reviewModalOrderTag" style="font-size: 11px; color: #38bdf8; font-weight: 800; font-family: monospace;">#ORD-1</span>
+        </div>
+        <div id="reviewModalSellerName" style="font-weight: 800; color: #ffffff; font-size: 14.5px;">Peer Seller</div>
+        <div id="reviewModalProduct" style="font-size: 12px; color: #cbd5e1; margin-top: 2px;">Calculus Textbook 3rd Ed</div>
+      </div>
+
+      <form id="reviewForm" method="POST" action="/submit-review" onsubmit="handleReviewSubmit(event)">
+        <input type="hidden" name="order_id" id="reviewOrderIdInput" value="">
+        <input type="hidden" name="rating" id="reviewRatingInput" value="5">
+
+        <label style="display: block; font-size: 12.5px; font-weight: 700; color: #cbd5e1; text-align: center; margin-bottom: 4px;">
+          Overall Seller & Handover Rating
+        </label>
+        
+        <div class="star-select-row" id="starRatingContainer" onmouseleave="resetHoverReviewRating()">
+          <i class="ph-fill ph-star selected" onmouseenter="hoverReviewRating(1)" onclick="setReviewRating(1)"></i>
+          <i class="ph-fill ph-star selected" onmouseenter="hoverReviewRating(2)" onclick="setReviewRating(2)"></i>
+          <i class="ph-fill ph-star selected" onmouseenter="hoverReviewRating(3)" onclick="setReviewRating(3)"></i>
+          <i class="ph-fill ph-star selected" onmouseenter="hoverReviewRating(4)" onclick="setReviewRating(4)"></i>
+          <i class="ph-fill ph-star selected" onmouseenter="hoverReviewRating(5)" onclick="setReviewRating(5)"></i>
+        </div>
+        <div id="starRatingLabel" style="text-align: center; font-size: 12px; font-weight: 800; color: #fbbf24; margin-top: -12px; margin-bottom: 16px;">
+          5 Stars (Excellent - Highly Recommended)
+        </div>
+
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">
+            Feedback & Meetup Experience (Optional)
+          </label>
+          <textarea name="comment" id="reviewCommentInput" rows="3" placeholder="How was the item condition, communication, and campus meetup reliability?" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 10px; color: #ffffff; font-size: 13px; font-family: inherit; resize: vertical; outline: none;"></textarea>
+        </div>
+
+        <button type="submit" id="reviewSubmitBtn" style="width: 100%; padding: 13px; border-radius: 10px; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);">
+          <i class="ph-bold ph-star"></i>
+          Submit Verified Review
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- Digital Receipt Modal -->
   <div id="receiptModalBackdrop" class="modal-backdrop" onclick="if(event.target===this) closeReceiptModal();">

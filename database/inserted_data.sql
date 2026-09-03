@@ -20,23 +20,31 @@ INSERT INTO cart (student_id, total_bill)
 VALUES ('STU002', 0);
 
 -- ================================
--- 4. PRODUCT (3 items)
+-- 4. PRODUCT (7 items)
 -- ================================
-INSERT INTO product (product_name, category, description, selling_price, recommended_price, used_in_course, purchase_date, student_id)
+INSERT INTO product (product_id, product_name, category, description, selling_price, recommended_price, used_in_course, purchase_date, student_id)
 VALUES 
-('Calculus Textbook 3rd Ed', 'Books', 'Lightly used, no markings', 500.00, 480.00, 'MATH101', '2024-01-10', 'STU001'),
-('Scientific Calculator FX-991', 'Electronics', 'Used one semester, works fine', 800.00, 750.00, 'MATH101', '2024-02-01', 'STU002'),
-('Dell Laptop Inspiron 15', 'Electronics', 'Good condition, minor scratches on lid', 25000.00, 24000.00, 'CSE101', '2023-11-15', 'STU001');
+(1, 'Calculus Textbook 3rd Ed', 'Books', 'Lightly used, no markings', 500.00, 480.00, 'MATH101', '2024-01-10', 'STU001'),
+(2, 'Scientific Calculator FX-991', 'Electronics', 'Used one semester, works fine', 800.00, 750.00, 'MATH101', '2024-02-01', 'STU002'),
+(3, 'Dell Laptop Inspiron 15', 'Electronics', 'Good condition, minor scratches on lid', 25000.00, 24000.00, 'CSE101', '2023-11-15', 'STU001'),
+(4, 'History of Economic Thought', 'Books', 'Original textbook for ECO101, clean pages with minor highlights.', 350.00, 320.00, 'ECO101', '2024-03-01', 'STU001'),
+(5, 'Digital Logic Trainer Kit & Breadboard', 'Lab Equipment', 'Complete breadboard with 74-series logic gate ICs and jumper wires, tested for CSE260/EEE241 lab.', 1200.00, 1100.00, 'CSE260, EEE241', '2024-02-15', 'STU002'),
+(6, 'Introduction to Algorithms (CLRS 3rd Ed)', 'Books', 'Comprehensive algorithms textbook for CSE221. Clean binding with minimal annotations.', 650.00, 600.00, 'CSE221', '2024-01-20', 'STU001'),
+(7, 'Arduino Uno R3 Microcontroller Kit', 'Electronics', 'Original Arduino board with sensor modules, USB cable, and breadboard for robotics & IoT projects.', 1800.00, 1650.00, 'CSE321, EEE305', '2023-12-10', 'STU002');
 
 -- ================================
 -- 5. PRODUCT_PHOTO
 -- ================================
 INSERT INTO product_photo (product_id, photo)
 VALUES 
-(1, 'https://example.com/photos/calculus1.jpg'),
-(2, 'https://example.com/photos/calculator1.jpg'),
-(3, 'https://example.com/photos/laptop1.jpg'),
-(3, 'https://example.com/photos/laptop2.jpg');
+(1, '/static/uploads/calculus_3rd_ed.jpg'),
+(2, '/static/uploads/casio_fx991ex.jpg'),
+(3, '/static/uploads/dell_inspiron_15.png'),
+(4, '/static/uploads/economic_thought_cover.png'),
+(4, '/static/uploads/economic_thought_page.png'),
+(5, '/static/uploads/prod_5_1787767105_954.png'),
+(6, '/static/uploads/prod_6_1788430910_601.png'),
+(7, '/static/uploads/prod_7_1788431317_237.png');
 
 -- ================================
 -- 6. PRODUCT_PRICE
@@ -45,7 +53,11 @@ INSERT INTO product_price (product_id, selling)
 VALUES 
 (1, 500.00),
 (2, 800.00),
-(3, 25000.00);
+(3, 25000.00),
+(4, 350.00),
+(5, 1200.00),
+(6, 650.00),
+(7, 1800.00);
 
 -- ================================
 -- 7. PRODUCT_DATE
@@ -54,7 +66,11 @@ INSERT INTO product_date (product_id, purchase, sold)
 VALUES 
 (1, '2024-01-10', NULL),
 (2, '2024-02-01', NULL),
-(3, '2023-11-15', NULL);
+(3, '2023-11-15', NULL),
+(4, '2024-03-01', NULL),
+(5, '2024-02-15', NULL),
+(6, '2024-01-20', NULL),
+(7, '2023-12-10', NULL);
 
 -- ================================
 -- 8. ADD_TO_CART

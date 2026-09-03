@@ -811,8 +811,26 @@
           <span class="tag tag-age"><i class="ph ph-hourglass-high"></i> Age: {{ product_age }}</span>
         </div>
 
-        <!-- Title -->
-        <h1 class="product-title">{{ product.product_name }}</h1>
+        <!-- Title & Product Review Rating -->
+        <h1 class="product-title" style="margin-bottom: 6px;">{{ product.product_name }}</h1>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+          {% if product_reviews_count and product_reviews_count > 0 %}
+            <div style="color: #fbbf24; font-size: 14px; display: inline-flex; gap: 2px;">
+              {% for i in range((product_avg_rating or 5.0)|round|int) %}
+                <i class="ph-fill ph-star"></i>
+              {% endfor %}
+              {% for i in range(5 - ((product_avg_rating or 5.0)|round|int)) %}
+                <i class="ph ph-star" style="opacity: 0.3;"></i>
+              {% endfor %}
+            </div>
+            <span style="color: #fbbf24; font-weight: 800; font-size: 13.5px;">{{ "%.1f"|format(product_avg_rating) }}</span>
+            <span style="color: #94a3b8; font-size: 12.5px;">({{ product_reviews_count }} verified product review{{ 's' if product_reviews_count > 1 else '' }})</span>
+          {% else %}
+            <span style="color: #64748b; font-size: 12.5px; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="ph ph-star"></i> No reviews for this specific item yet
+            </span>
+          {% endif %}
+        </div>
 
         <!-- Price Card with Derived Recommended Price -->
         <div class="price-card">
@@ -965,6 +983,72 @@
     <div class="description-card">
       <h2><i class="ph ph-article"></i> Product Description & Details</h2>
       <p>{{ product.description or 'No extra description provided by seller. Contact seller via chat for additional queries.' }}</p>
+    </div>
+
+    <!-- 1. Verified Product Reviews Section (Specifically for THIS Product) -->
+    <div class="description-card" style="margin-top: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 20px;">
+            <i class="ph-bold ph-star"></i>
+          </div>
+          <div>
+            <h2 style="font-size: 18px; font-weight: 800; color: #ffffff; margin: 0 0 2px;">Verified Reviews for this Product</h2>
+            <div style="font-size: 12.5px; color: #94a3b8;">
+              Product Rating: <strong style="color: #fbbf24;">{{ "%.1f"|format(product_avg_rating) if product_reviews_count > 0 else 'Unrated' }} / 5.0</strong> &bull; <strong>{{ product_reviews_count }} Verified Review(s)</strong>
+            </div>
+          </div>
+        </div>
+        {% if seller and seller.student_id %}
+          <a href="{{ url_for('profile', student_id=seller.student_id) }}" style="color: #38bdf8; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+            View Seller Profile <i class="ph-bold ph-arrow-right"></i>
+          </a>
+        {% endif %}
+      </div>
+
+      {% if product_reviews and product_reviews|length > 0 %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+          {% for r in product_reviews %}
+            <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 16px; transition: all 0.2s;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #ffffff; font-size: 12px;">
+                    {{ r.reviewer_name[0]|upper if r.reviewer_name else 'U' }}
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; color: #ffffff; font-size: 13px;">{{ r.reviewer_name or 'BRACU Student' }}</div>
+                    <div style="font-size: 10.5px; color: #34d399; display: flex; align-items: center; gap: 2px;">
+                      <i class="ph-fill ph-seal-check"></i> Verified Product Buyer
+                    </div>
+                  </div>
+                </div>
+                <div style="color: #fbbf24; font-size: 13px; display: flex; gap: 2px;">
+                  {% for i in range(r.rating or 5) %}
+                    <i class="ph-fill ph-star"></i>
+                  {% endfor %}
+                  {% for i in range(5 - (r.rating or 5)) %}
+                    <i class="ph ph-star" style="opacity: 0.25;"></i>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div style="font-size: 12.5px; color: #cbd5e1; line-height: 1.4;">
+                "{{ r.comment or 'Great condition, verified purchase!' }}"
+              </div>
+
+              <div style="font-size: 10.5px; color: #64748b; margin-top: 8px;">
+                <i class="ph ph-clock"></i> {{ r.review_date.strftime('%d %b %Y, %I:%M %p') if r.review_date else 'Recent' }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 24px 16px; color: #64748b;">
+          <i class="ph ph-star-half" style="font-size: 36px; color: #475569; display: block; margin-bottom: 8px;"></i>
+          <p style="font-size: 13.5px; margin-bottom: 4px; color: #94a3b8; font-weight: 600;">No reviews for this specific product yet.</p>
+          <span style="font-size: 12px;">Be the first verified buyer to leave a review after completing your purchase!</span>
+        </div>
+      {% endif %}
     </div>
 
   </main>
@@ -1213,12 +1297,19 @@
       </div>
       <div class="modal-body">
         
-        <!-- Product Summary snippet -->
+        <!-- Product Summary snippet with Reviews indicator -->
         <div style="display: flex; gap: 14px; background: rgba(30, 41, 59, 0.6); padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px; align-items: center;">
           <img src="{{ photos[0] if photos else 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200' }}" alt="{{ product.product_name }}" style="width: 54px; height: 54px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);">
           <div style="flex: 1;">
             <div style="font-weight: 700; font-size: 14px; color: #ffffff; margin-bottom: 2px;">{{ product.product_name }}</div>
-            <div style="font-size: 12px; color: #94a3b8;"><i class="ph ph-user"></i> Seller: {{ seller.name if seller else 'Peer' }}</div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #94a3b8; flex-wrap: wrap;">
+              <span><i class="ph ph-user"></i> {{ seller.name if seller else 'Peer' }}</span>
+              {% if product_reviews_count and product_reviews_count > 0 %}
+                <span style="color: #fbbf24; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; background: rgba(245, 158, 11, 0.12); padding: 2px 6px; border-radius: 6px;">
+                  <i class="ph-fill ph-star"></i> {{ "%.1f"|format(product_avg_rating) }} ({{ product_reviews_count }} review{{ 's' if product_reviews_count > 1 else '' }})
+                </span>
+              {% endif %}
+            </div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Payable</div>
