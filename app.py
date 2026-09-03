@@ -1156,13 +1156,18 @@ def add_to_cart_route(product_id):
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor()
-
-    cur.execute("SELECT product_name FROM product WHERE product_id = %s", (product_id,))
+    cur.execute("SELECT sold_date, product_name FROM product WHERE product_id = %s", (product_id,))
     p_check = cur.fetchone()
     if not p_check:
         cur.close()
         if is_ajax or request.method == 'POST':
             return jsonify({'success': False, 'message': 'Product not found.'}), 404
+        return redirect(url_for('marketplace'))
+
+    if p_check.get('sold_date'):
+        cur.close()
+        if is_ajax or request.method == 'POST':
+            return jsonify({'success': False, 'message': f"'{p_check.get('product_name', 'Item')}' has already been sold."}), 400
         return redirect(url_for('marketplace'))
 
     cur.execute("SELECT cart_id FROM cart WHERE student_id = %s LIMIT 1", (student_id,))
@@ -1220,15 +1225,16 @@ def remove_from_cart(product_id):
     return redirect(url_for('cart_view'))
 
 
-@app.route('/checkout', methods=['POST'])
-def checkout():
+@app.route('/cart/checkout', methods=['POST'])
+def cart_checkout():
     student_id = session.get('student_id')
     user_name = session.get('user_name', 'Student Buyer')
+
     if not student_id:
         return redirect(url_for('login'))
 
     delivery_place = request.form.get('delivery_place', 'UB Gate / Building Lobby')
-    payment_method = request.form.get('payment_method', 'cash_on_meetup')
+    payment_method = request.form.get('payment_method', 'bkash')
     account_number = request.form.get('account_number', '').strip()
     trx_id = request.form.get('trx_id', '').strip()
 
