@@ -482,7 +482,7 @@
             <span>৳{{ total_bill }}</span>
           </div>
 
-          <form action="{{ url_for('checkout') }}" method="POST" id="cartCheckoutForm" style="margin-top: 16px;">
+          <form action="{{ url_for('cart_checkout') }}" method="POST" id="cartCheckoutForm" style="margin-top: 16px;">
             <input type="hidden" name="payment_method" id="cartPaymentMethodInput" value="bkash">
 
             <div style="margin-bottom: 12px;">
