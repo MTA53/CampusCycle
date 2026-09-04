@@ -582,12 +582,12 @@ def marketplace():
     cur.execute("""
         SELECT p.product_id, p.product_name, p.category, p.description,
                p.selling_price, p.recommended_price, p.used_in_course,
-               p.purchase_date, p.sold_date, p.student_id AS seller_id,
+               p.purchase_date, p.sold_date, p.order_id, p.student_id AS seller_id,
                u.name AS seller_name,
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM product p
         LEFT JOIN user u ON p.student_id = u.student_id
-        WHERE p.sold_date IS NULL
+        WHERE p.sold_date IS NULL AND p.order_id IS NULL
         ORDER BY p.product_id DESC
     """)
     available_products = list(cur.fetchall() or [])
@@ -596,13 +596,13 @@ def marketplace():
     cur.execute("""
         SELECT p.product_id, p.product_name, p.category, p.description,
                p.selling_price, p.recommended_price, p.used_in_course,
-               p.purchase_date, p.sold_date, p.student_id AS seller_id,
+               p.purchase_date, p.sold_date, p.order_id, p.student_id AS seller_id,
                u.name AS seller_name,
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) as photo
         FROM product p
         LEFT JOIN user u ON p.student_id = u.student_id
-        WHERE p.sold_date IS NOT NULL
-        ORDER BY p.sold_date DESC, p.product_id DESC
+        WHERE p.sold_date IS NOT NULL OR p.order_id IS NOT NULL
+        ORDER BY COALESCE(p.sold_date, CURDATE()) DESC, p.product_id DESC
     """)
     sold_products = list(cur.fetchall() or [])
 
@@ -636,6 +636,8 @@ def marketplace():
         p['review_count'] = p_stats['review_count']
 
     for p in sold_products:
+        if not p.get('sold_date'):
+            p['sold_date'] = date.today().strftime('%Y-%m-%d')
         p['age'] = compute_product_age(p.get('purchase_date'))
         p_stats = review_stat_map.get(p['product_id'], {'avg_rating': 0.0, 'review_count': 0})
         p['avg_rating'] = p_stats['avg_rating']
@@ -700,6 +702,9 @@ def product_detail(product_id):
     if not product:
         cur.close()
         return redirect(url_for('marketplace'))
+
+    if product.get('order_id') and not product.get('sold_date'):
+        product['sold_date'] = date.today().strftime('%Y-%m-%d')
 
     cur.execute("SELECT photo FROM product_photo WHERE product_id = %s", (product_id,))
     photo_rows = cur.fetchall() or []
@@ -1046,6 +1051,9 @@ def sell_product():
     return render_template('sell_product.html', next_id=next_id, cart_count=cart_count)
 
 
+
+
+
 # =========================================================================
 # CART & CHECKOUT ROUTES
 # =========================================================================
@@ -1156,7 +1164,7 @@ def add_to_cart_route(product_id):
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT sold_date, product_name FROM product WHERE product_id = %s", (product_id,))
+    cur.execute("SELECT sold_date, order_id, product_name FROM product WHERE product_id = %s", (product_id,))
     p_check = cur.fetchone()
     if not p_check:
         cur.close()
@@ -1164,7 +1172,7 @@ def add_to_cart_route(product_id):
             return jsonify({'success': False, 'message': 'Product not found.'}), 404
         return redirect(url_for('marketplace'))
 
-    if p_check.get('sold_date'):
+    if p_check.get('sold_date') or p_check.get('order_id'):
         cur.close()
         if is_ajax or request.method == 'POST':
             return jsonify({'success': False, 'message': f"'{p_check.get('product_name', 'Item')}' has already been sold."}), 400
@@ -1281,9 +1289,9 @@ def cart_checkout():
 
     cur.execute("UPDATE cart SET order_id = %s, total_bill = %s WHERE cart_id = %s", (order_id, total_bill, cart_id))
 
-    # Link items with order_id and keep product active for continuous purchases
+    # Mark items as sold with order_id and sold_date
     for item in items:
-        cur.execute("UPDATE product SET order_id = %s, sold_date = NULL WHERE product_id = %s", (order_id, item['product_id']))
+        cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, item['product_id']))
         try:
             cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (item['product_id'],))
         except Exception:
@@ -1386,8 +1394,12 @@ def buy_now(product_id):
     receipt_json = create_digital_receipt(order_id, student_id, user_name, total_bill, payment_method, account_number, trx_id, delivery_place, items_summary)
     cur.execute("UPDATE orders SET receipt = %s WHERE order_id = %s", (receipt_json, order_id))
 
-    # Link product with order_id and keep product active in stock
-    cur.execute("UPDATE product SET order_id = %s, sold_date = NULL WHERE product_id = %s", (order_id, product_id))
+    # Link product with order_id and mark as sold
+    cur.execute("UPDATE product SET order_id = %s, sold_date = CURDATE() WHERE product_id = %s", (order_id, product_id))
+    try:
+        cur.execute("UPDATE product_date SET sold = CURDATE() WHERE product_id = %s", (product_id,))
+    except Exception:
+        pass
 
     # Notifications
     seller_id = product.get('seller_id')
@@ -1723,7 +1735,7 @@ def wishlist_view():
     cur.execute("""
         SELECT p.product_id, p.product_name, p.category, p.description,
                p.selling_price, p.recommended_price, p.used_in_course,
-               p.sold_date, p.student_id AS seller_id, u.name AS seller_name,
+               p.sold_date, p.order_id, p.student_id AS seller_id, u.name AS seller_name,
                u.trust_score AS seller_trust_score,
                (SELECT photo FROM product_photo pp WHERE pp.product_id = p.product_id LIMIT 1) AS photo
         FROM includes i
@@ -1733,6 +1745,9 @@ def wishlist_view():
         ORDER BY p.product_id DESC
     """, (wishlist_id,))
     wishlist_items = cur.fetchall() or []
+    for item in wishlist_items:
+        if item.get('order_id') and not item.get('sold_date'):
+            item['sold_date'] = date.today().strftime('%Y-%m-%d')
 
     wishlisted_product_ids = [item['product_id'] for item in wishlist_items]
 

@@ -238,6 +238,16 @@
       outline: none;
       transition: all 0.2s ease;
     }
+    /* Hide number input spinner arrows */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
     input:focus, select:focus, textarea:focus {
       border-color: #10b981;
       background: rgba(30, 41, 59, 0.9);
@@ -525,19 +535,25 @@
 
             <!-- Recommended Price (Derived Attribute) -->
             <div class="form-group">
-              <label for="recommended_price">
-                <i class="ph ph-sparkle"></i> Recommended Price (৳) <span class="badge-derived">Derived Attribute</span>
+              <label for="recommended_price" style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="ph ph-sparkle"></i> Recommended Price (৳) <span class="badge-derived">Derived Attribute</span></span>
+                <span id="applyRecHint" style="font-size: 11px; color: #38bdf8; font-weight: 600; display: none;">Click to apply</span>
               </label>
-              <input 
-                type="number" 
-                step="0.01" 
-                id="recommended_price" 
-                name="recommended_price" 
-                placeholder="Auto-calculated fair price"
-                readonly
-                style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399; font-weight: 700;"
-              >
-              <p class="help-hint">Suggested fair price calculated from category & seller benchmark</p>
+              <div class="recommended-input-wrapper" style="position: relative;" onclick="applyRecommendedPrice()" title="Click to use this recommended price as your selling price">
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  id="recommended_price" 
+                  name="recommended_price" 
+                  placeholder="Auto-calculated fair price"
+                  readonly
+                  style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399; font-weight: 700; cursor: pointer; padding-right: 95px;"
+                >
+                <button type="button" id="useRecBtn" onclick="applyRecommendedPrice(event)" style="position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: none; align-items: center; gap: 4px; transition: all 0.2s ease;">
+                  <i class="ph-bold ph-check"></i> Select
+                </button>
+              </div>
+              <p class="help-hint">Suggested fair price based on market benchmark. Click to set as selling price.</p>
             </div>
           </div>
         </div>
@@ -564,18 +580,7 @@
               <p class="help-hint">Used to derive item age & transparency timeline</p>
             </div>
 
-            <!-- Sold Date (Optional / Lifecycle) -->
-            <div class="form-group">
-              <label for="sold_date">
-                <i class="ph ph-calendar-check"></i> Sold Date (Optional)
-              </label>
-              <input 
-                type="date" 
-                id="sold_date" 
-                name="sold_date"
-              >
-              <p class="help-hint">Leave blank if item is currently available</p>
-            </div>
+
           </div>
 
           <!-- Warranty -->
@@ -679,19 +684,53 @@
       const sellingPriceInput = document.getElementById('selling_price');
       const recommendedPriceInput = document.getElementById('recommended_price');
       const categoryInput = document.getElementById('category');
+      const useRecBtn = document.getElementById('useRecBtn');
+      const applyRecHint = document.getElementById('applyRecHint');
       
       const price = parseFloat(sellingPriceInput.value);
       if (!isNaN(price) && price > 0) {
         // Compute derived student benchmark (e.g. 92% of asking or category-tailored discount)
         let discountFactor = 0.95;
-        if (categoryInput.value === 'Books') discountFactor = 0.92;
-        if (categoryInput.value === 'Electronics') discountFactor = 0.94;
-        if (categoryInput.value === 'Scientific Calculator') discountFactor = 0.90;
+        if (categoryInput && categoryInput.value === 'Books') discountFactor = 0.92;
+        if (categoryInput && categoryInput.value === 'Electronics') discountFactor = 0.94;
+        if (categoryInput && categoryInput.value === 'Scientific Calculator') discountFactor = 0.90;
 
         const recommended = Math.round(price * discountFactor * 100) / 100;
         recommendedPriceInput.value = recommended.toFixed(2);
+        if (useRecBtn) useRecBtn.style.display = 'inline-flex';
+        if (applyRecHint) applyRecHint.style.display = 'inline';
       } else {
         recommendedPriceInput.value = '';
+        if (useRecBtn) useRecBtn.style.display = 'none';
+        if (applyRecHint) applyRecHint.style.display = 'none';
+      }
+    }
+
+    // Select / Apply recommended price as selling price
+    function applyRecommendedPrice(e) {
+      if (e) e.stopPropagation();
+      const recommendedPriceInput = document.getElementById('recommended_price');
+      const sellingPriceInput = document.getElementById('selling_price');
+      if (recommendedPriceInput && sellingPriceInput && recommendedPriceInput.value) {
+        sellingPriceInput.value = recommendedPriceInput.value;
+        sellingPriceInput.focus();
+        
+        // Highlight feedback
+        sellingPriceInput.style.borderColor = '#34d399';
+        sellingPriceInput.style.boxShadow = '0 0 0 3px rgba(52, 211, 153, 0.35)';
+        
+        const btn = document.getElementById('useRecBtn');
+        if (btn) {
+          btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> Selected!';
+          btn.style.background = '#10b981';
+          btn.style.color = '#ffffff';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="ph-bold ph-check"></i> Select';
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.color = '#34d399';
+            sellingPriceInput.style.boxShadow = '';
+          }, 1500);
+        }
       }
     }
 
@@ -702,6 +741,7 @@
         const today = new Date().toISOString().split('T')[0];
         purchaseDate.value = today;
       }
+      calculateRecommendedPrice();
     });
   </script>
 

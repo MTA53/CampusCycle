@@ -832,19 +832,11 @@
           {% endif %}
         </div>
 
-        <!-- Price Card with Derived Recommended Price -->
+        <!-- Price Card -->
         <div class="price-card">
           <div class="price-main">
             <span class="price-label">Selling Price</span>
             <span class="price-val">৳{{ product.selling_price }}</span>
-          </div>
-          <div class="recommended-box">
-            <span class="recommended-pill">
-              <i class="ph ph-sparkle"></i> Recommended Price (Derived)
-            </span>
-            <div class="recommended-val">
-              ৳{{ product.recommended_price or product.selling_price }}
-            </div>
           </div>
         </div>
 
@@ -862,11 +854,11 @@
 
         <!-- Action Buttons: Pay Now, Add to Cart, Chat & Wishlist -->
         <div class="actions-grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
-          {% if product.sold_date %}
+          {% if product.sold_date or product.order_id %}
           <div style="grid-column: span 2; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
             <i class="ph-bold ph-seal-check" style="font-size: 24px; color: #f43f5e; flex-shrink: 0;"></i>
             <div>
-              <div style="font-weight: 800; color: #ffffff; font-size: 14px;">This item was sold on {{ product.sold_date }}.</div>
+              <div style="font-weight: 800; color: #ffffff; font-size: 14px;">This item was sold on {{ product.sold_date or 'recently' }}.</div>
               <div style="font-size: 12px; color: #fda4af;">Item is sold out. Add it to your Wishlist below to get alerted when another peer posts a similar item!</div>
             </div>
           </div>
