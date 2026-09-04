@@ -975,7 +975,7 @@
     {% if wishlist_items %}
     <div class="product-grid" id="wishlistGrid">
       {% for item in wishlist_items %}
-      <div class="product-card {% if item.sold_date %}sold-card{% endif %}" id="wishlist-item-{{ item.product_id }}">
+      <div class="product-card {% if item.sold_date or item.order_id %}sold-card{% endif %}" id="wishlist-item-{{ item.product_id }}">
         
         <!-- Image & Badges -->
         <div class="card-img-wrap">
@@ -997,7 +997,7 @@
               {% endif %}
             </div>
             <div>
-              {% if item.sold_date %}
+              {% if item.sold_date or item.order_id %}
               <span class="badge badge-sold"><i class="ph-fill ph-x-circle"></i> Sold</span>
               {% else %}
               <span class="badge badge-avail"><i class="ph-fill ph-check-circle"></i> Available</span>
@@ -1026,14 +1026,11 @@
 
           <div class="price-box">
             <span class="current-price">৳{{ "%.0f"|format(item.selling_price) }}</span>
-            {% if item.recommended_price and item.recommended_price > item.selling_price %}
-            <span class="rec-price">৳{{ "%.0f"|format(item.recommended_price) }}</span>
-            {% endif %}
           </div>
 
           <!-- Actions -->
           <div class="card-actions">
-            {% if not item.sold_date %}
+            {% if not item.sold_date and not item.order_id %}
             <button type="button" class="btn btn-primary btn-sm" id="btn-cart-{{ item.product_id }}" onclick="addToCartFromWishlist({{ item.product_id }}, '{{ item.product_name|escape }}')">
               <i class="ph-bold ph-shopping-cart-simple"></i> Add to Cart
             </button>
